@@ -5,6 +5,9 @@ namespace OrderManagement.Entity
     public class BasketProduct
     {
         public long Id { get; set; }
+        
+        [ForeignKey("ProductId")]
+        public Product Product { get; set; }
         public long ProductId { get; set; }
 
         [ForeignKey("BasketId")]

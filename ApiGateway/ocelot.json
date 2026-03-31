@@ -259,6 +259,30 @@
       ],
       "UpstreamPathTemplate": "/geoPortalApi/Order/{everything}",
       "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
+    },
+    {
+      "DownstreamPathTemplate": "/geoPortalApi/internalApiKey/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5161
+        }
+      ],
+      "UpstreamPathTemplate": "/geoPortalApi/internalApiKey/{everything}",
+      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
+    },
+    {
+      "DownstreamPathTemplate": "/geoPortalApi/Product/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5161
+        }
+      ],
+      "UpstreamPathTemplate": "/geoPortalApi/Product/{everything}",
+      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
     }
   ],
   "GlobalConfiguration": {

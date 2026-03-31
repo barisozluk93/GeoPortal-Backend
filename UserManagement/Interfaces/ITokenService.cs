@@ -7,5 +7,6 @@ namespace UserManagement.Interfaces
     {
         Task<GenerateTokenResponse> GenerateToken(GenerateTokenRequest request);
         Task<ClaimsPrincipal?> GetPrincipalFromExpiredToken(string? token);
+        Task<GenerateTokenResponse> GenerateApiKey(GenerateTokenRequest request);
     }
 }

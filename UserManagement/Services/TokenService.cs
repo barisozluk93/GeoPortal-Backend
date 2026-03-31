@@ -18,6 +18,40 @@ namespace UserManagement.Services
             this.configuration = configuration;
 
         }
+        public Task<GenerateTokenResponse> GenerateApiKey(GenerateTokenRequest request)
+        {
+            SymmetricSecurityKey symmetricSecurityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["AppSettings:Secret"]));
+
+            var dateTimeNow = DateTime.UtcNow;
+
+            JwtSecurityToken jwt = new JwtSecurityToken(
+                    issuer: configuration["AppSettings:ValidIssuer"],
+                    audience: configuration["AppSettings:ValidAudience"],
+                    claims: new List<Claim> {
+                        new Claim("username", request.User.Username),
+                        new Claim("email", request.User.Email),
+                        new Claim("name", request.User.Name),
+                        new Claim("surname", request.User.Surname),
+                        new Claim("phone", request.User.Phone),
+                        new Claim("id", request.User.Id.ToString()),
+                        new Claim("roles", JsonConvert.SerializeObject(request.User.Roles)),
+                        new Claim("permissions", JsonConvert.SerializeObject(request.User.Permissions.Select(s => s.Id))),
+                        new Claim("organizations", JsonConvert.SerializeObject(request.User.Organizations)),
+                    },
+                    notBefore: dateTimeNow,
+                    expires: dateTimeNow.ToLocalTime().AddMonths(1),
+                    signingCredentials: new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256)
+                );
+
+            return Task.FromResult(new GenerateTokenResponse
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(jwt),
+                TokenExpireDate = dateTimeNow.ToLocalTime().AddMinutes(Convert.ToInt32(configuration["AppSettings:TokenValidityInMinutes"])),
+                RefreshToken = GenerateRefreshToken(),
+                RefreshTokenExpireDate = dateTimeNow.AddDays(Convert.ToInt32(configuration["AppSettings:RefreshTokenValidityInDays"]))
+
+            });
+        }
 
         public Task<GenerateTokenResponse> GenerateToken(GenerateTokenRequest request)
         {

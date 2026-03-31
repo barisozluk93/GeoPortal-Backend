@@ -14,5 +14,7 @@ namespace UserManagement.Interfaces
 
         Task<Result<User>> Register(User user);
 
+        Task<Result<string>> GenerateApiKey(long userId);
+
     }
 }

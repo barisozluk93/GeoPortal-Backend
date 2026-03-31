@@ -292,6 +292,14 @@ namespace UserManagement.Migrations
                             IsDeleted = false,
                             IsSystemData = true,
                             Name = "Harita Ekranı Katman Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 22L,
+                            Code = "ApiKey.Buy.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "API Key Satın Alma Yetkisi"
                         });
                 });
 
@@ -502,9 +510,16 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 25L,
+                            Id = 24L,
                             IsDeleted = false,
                             PermissionId = 21L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 26L,
+                            IsDeleted = false,
+                            PermissionId = 22L,
                             RoleId = 1L
                         },
                         new
@@ -530,16 +545,16 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 24L,
+                            Id = 25L,
                             IsDeleted = false,
-                            PermissionId = 20L,
+                            PermissionId = 21L,
                             RoleId = 2L
                         },
                         new
                         {
-                            Id = 26L,
+                            Id = 27L,
                             IsDeleted = false,
-                            PermissionId = 21L,
+                            PermissionId = 22L,
                             RoleId = 2L
                         });
                 });
@@ -854,9 +869,16 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 25L,
+                            Id = 24L,
                             IsDeleted = false,
                             PermissionId = 21L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 26L,
+                            IsDeleted = false,
+                            PermissionId = 22L,
                             UserId = 1L
                         },
                         new
@@ -882,16 +904,16 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 24L,
+                            Id = 25L,
                             IsDeleted = false,
-                            PermissionId = 20L,
+                            PermissionId = 21L,
                             UserId = 2L
                         },
                         new
                         {
-                            Id = 26L,
+                            Id = 27L,
                             IsDeleted = false,
-                            PermissionId = 21L,
+                            PermissionId = 22L,
                             UserId = 2L
                         });
                 });

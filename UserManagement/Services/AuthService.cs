@@ -2,6 +2,7 @@
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
@@ -379,6 +380,49 @@ namespace UserManagement.Services
         
         }
 
+        public async Task<Result<string>> GenerateApiKey(long userId)
+        {
+            var result = new Result<string>();
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var user = await _dbContext.Users.Where(x => x.Id == userId)
+                        .Select(s => new User()
+                        {
+                            Id = s.Id,
+                            Name = s.Name,
+                            Surname = s.Surname,
+                            Username = s.Username,
+                            Password = s.Password,
+                            Salt = s.Salt,
+                            Email = s.Email,
+                            Phone = s.Phone,
+                            Permissions = _dbContext.UserPermissions.Include(p => p.Permission).Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.Permission).ToList(),
+                            Roles = _dbContext.UserRoles.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.RoleId).ToList(),
+                            Organizations = _dbContext.OrganizationUsers.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.OrganizationId).ToList()
+                        }).FirstOrDefaultAsync();
+
+                    if (user != null)
+                    {
+                        var generatedApiKey = await tokenService.GenerateApiKey(new GenerateTokenRequest { User = user });
+                        result.SetData(generatedApiKey.Token);
+                        result.SetMessage("İşlem başrı ile gerçekleştirildi.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+
+                    result.SetIsSuccess(false);
+                    result.SetMessage(ex.Message);
+                }
+            }
+
+            return result;
+
+        }
         private async Task SendResetPasswordLink(string email, string link)
         {
             var emailMessage = new MimeMessage();

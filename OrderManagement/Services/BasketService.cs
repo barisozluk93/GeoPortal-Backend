@@ -125,18 +125,18 @@ namespace OrderManagement.Services
                     var basket = await _dbContext.Baskets.Where(x => x.UserId == userId && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
                     if (basket != null)
                     {
-                        var productIdList = await _dbContext.BasketProducts.Where(x => x.BasketId == basket.Id && x.IsActive && !x.IsDeleted).Select(s => s.ProductId).ToListAsync();
+                        var productList = await _dbContext.BasketProducts.Include(x => x.Product).Where(x => x.BasketId == basket.Id && x.IsActive && !x.IsDeleted).Select(s => s.Product).ToListAsync();
 
                         var basketList = new List<Basket>();
-                        foreach (var productId in productIdList)
+                        foreach (var product in productList)
                         {
                             Basket item = new Basket();
                             item.Id = basket.Id;
                             item.UserId = basket.UserId;
-                            item.ProductId = productId;
+                            item.ProductId = product.Id;
                             item.IsDeleted = false;
                             item.IsActive = true;
-                            item.Product = await GetProduct(productId, token);
+                            item.Product = product;
                             basketList.Add(item);
                         }
 
@@ -265,18 +265,18 @@ namespace OrderManagement.Services
                     var basket = await _dbContext.Baskets.Where(x => x.Id == id && !x.IsDeleted).FirstOrDefaultAsync();
                     if (basket != null)
                     {
-                        var productIdList = await _dbContext.BasketProducts.Where(x => x.BasketId == basket.Id && !x.IsDeleted).Select(s => s.ProductId).ToListAsync();
+                        var productList = await _dbContext.BasketProducts.Include(x => x.Product).Where(x => x.BasketId == basket.Id && !x.IsDeleted).Select(s => s.Product).ToListAsync();
 
                         var basketList = new List<Basket>();
-                        foreach (var productId in productIdList)
+                        foreach (var product in productList)
                         {
                             Basket item = new Basket();
                             item.Id = basket.Id;
                             item.UserId = basket.UserId;
-                            item.ProductId = productId;
+                            item.ProductId = product.Id;
                             item.IsDeleted = false;
                             item.IsActive = false;
-                            item.Product = await GetProduct(productId, token);
+                            item.Product = product;
                             basketList.Add(item);
                         }
 
@@ -297,54 +297,6 @@ namespace OrderManagement.Services
             }
 
             return result;
-        }
-
-        private async Task<Product> GetProduct(long id, string token)
-        {
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync(_configuration["AppSettings:ApiUrl"] + "/geoPortalApi/Product/GetByIdForBasket/" + id);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseStr = await response.Content.ReadAsStringAsync();
-
-                if (!string.IsNullOrEmpty(responseStr))
-                {
-                    try
-                    {
-                        Result<Model.Product> result = JsonConvert.DeserializeObject<Result<Model.Product>>(responseStr);
-
-                        if (result.GetIsSuccess().Value)
-                        {
-                            var product = result.GetData();  
-                            product.FileResult = GetFileResult(product.FileId, token).Result;
-
-                            return product;
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        return null;
-                    }
-
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                return null;
-            }
-
-            return null;
         }
 
         private async Task<FileContentResult> GetFileResult(long id, string token)

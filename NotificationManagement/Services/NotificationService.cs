@@ -75,8 +75,6 @@ namespace NotificationManagement.Services
                 await _dbContext.SaveChangesAsync();
                 transaction.Commit();
 
-                Console.WriteLine("=== NOTIFICATION SAVE ===");
-                Console.WriteLine("Notification UserId: " + notification.UserId);
 
                 await _hubContext.Clients
                     .User(notification.UserId.ToString())
@@ -94,7 +92,6 @@ namespace NotificationManagement.Services
                     .Select(x => x.PushToken)
                     .ToListAsync();
 
-                Console.WriteLine("Push token count: " + pushTokens.Count);
 
                 await _expoPushService.SendAsync(
                     pushTokens,

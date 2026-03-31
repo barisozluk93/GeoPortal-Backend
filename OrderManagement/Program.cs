@@ -24,9 +24,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<OrderManagementContext>(options =>
         options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IFabricService, FabricService>();
 builder.Services.AddScoped<IBasketService, BasketService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 
 builder.Services.AddAuthentication(options =>

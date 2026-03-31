@@ -8,6 +8,7 @@ using MapManagement.DbContexts;
 using MapManagement.Authorization;
 using MapManagement.Interfaces;
 using MapManagement.Services;
+using MapManagement.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 var Configuration = builder.Configuration;
@@ -23,6 +24,15 @@ builder.Services.AddDbContext<MapManagementContext>(options =>
         options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IMapService, MapService>();
+builder.Services.AddScoped<IApiKeyValidationService, ApiKeyValidationService>();
+builder.Services.AddHttpClient("OrderManagementValidation", client =>
+{
+    var baseUrl = Configuration["OrderManagementValidation:BaseUrl"];
+    if (!string.IsNullOrWhiteSpace(baseUrl))
+    {
+        client.BaseAddress = new Uri(baseUrl);
+    }
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -70,6 +80,8 @@ else
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ApiKeyValidationMiddleware>();
 
 app.UseAuthentication();
 

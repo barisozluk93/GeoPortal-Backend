@@ -80,6 +80,32 @@ namespace UserManagement.Services
             return result;
         }
 
+        public async Task<Result<List<long>>> GetSuperUserList()
+        {
+            var result = new Result<List<long>>();
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var data = await _dbContext.Users
+                        .Where(u => !u.IsDeleted &&
+                                    _dbContext.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == 1))
+                        .Select(s => s.Id)
+                        .ToListAsync();
+
+                    result.SetData(data);
+                    result.SetMessage("İşlem başarı ile gerçekleşti.");
+                }
+                catch (Exception ex)
+                {
+                    result.SetIsSuccess(false);
+                    result.SetMessage(ex.Message);
+                }
+            }
+
+            return result;
+        }
         public async Task<Result<List<User>>> GetUsers()
         {
             var result = new Result<List<User>>();

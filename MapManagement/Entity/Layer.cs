@@ -15,7 +15,6 @@ namespace MapManagement.Entity
         public bool IsBaseMap { get; set; }
 
         public bool IsDeleted { get; set; }
-        public double? Price { get; set; }
 
     }
 }

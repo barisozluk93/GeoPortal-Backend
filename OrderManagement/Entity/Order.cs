@@ -14,15 +14,12 @@ namespace OrderManagement.Entity
         public Basket? Basket { get; set; }
         [ForeignKey("BasketId")]
         public long BasketId { get; set; }
-        public long DeliveryAddressId { get; set; }
         public long InvoiceAddressId { get; set; }
 
 
         [NotMapped]
         public List<OrderProduct>? OrderProducts { get; set; }
 
-        [NotMapped]
-        public UserAddress? DeliveryAddress { get; set; }
 
         [NotMapped]
         public UserAddress? InvoiceAddress { get; set; }

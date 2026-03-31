@@ -48,7 +48,9 @@ namespace OrderManagement.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateStatus([FromBody] OrderProduct orderProduct)
         {
-            var result = await _orderService.UpdateStatus(orderProduct);
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            var result = await _orderService.UpdateStatus(orderProduct, token);
             return new OkObjectResult(result);
         }
 
@@ -72,13 +74,13 @@ namespace OrderManagement.Controllers
             return new OkObjectResult(result);
         }
 
-        [HttpGet("ComingPaginate/{userId}")]
+        [HttpGet("ComingPaginate")]
         [Authorize]
-        public async Task<IActionResult> ComingPaginate([FromQuery] PagingParameter pagingParameter, long userId)
+        public async Task<IActionResult> ComingPaginate([FromQuery] PagingParameter pagingParameter)
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
 
-            var result = await _orderService.ComingPaginate(pagingParameter, userId, token);
+            var result = await _orderService.ComingPaginate(pagingParameter, token);
             return new OkObjectResult(result);
         }
 

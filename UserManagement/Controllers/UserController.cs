@@ -37,6 +37,15 @@ namespace UserManagement.Controllers
             return new OkObjectResult(result);
         }
 
+        [HttpGet("GetSuperUserList")]
+        [Authorize]
+
+        public async Task<IActionResult> GetSuperUserList()
+        {
+            var result = await _userService.GetSuperUserList();
+            return new OkObjectResult(result);
+        }
+
         [HttpPost("Save")]
         [Authorize]
         [HasPermission("UserScene.Save.Permission")]

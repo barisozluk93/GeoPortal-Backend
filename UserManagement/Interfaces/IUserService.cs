@@ -7,6 +7,7 @@ namespace UserManagement.Interfaces
     {
         Task<Result<PagingResult<PagedList<User>>>> Paginate(PagingParameter pagingParameter);
         Task<Result<List<User>>> GetUsers();
+        Task<Result<List<long>>> GetSuperUserList();
         Task<Result<User>> Save(User user);
         Task<Result<User>> Update(User user);
         Task<Result<User>> Delete(long id);
