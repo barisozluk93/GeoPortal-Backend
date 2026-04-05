@@ -23,11 +23,11 @@ namespace MapManagement.DbContexts
                new LayerGroup { Id = 1, IsDeleted = false, Name = "Altlık Haritalar" }
             );
 
-            modelBuilder.Entity<Layer>().HasData(
-               new Layer { Id = 1, IsDeleted = false, Name = "Carto Light", Url = "https://{a-d}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", LayerGroupId = 1, IsBaseMap = true },
-               new Layer { Id = 2, IsDeleted = false, Name = "OSM Standart", Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png", LayerGroupId = 1, IsBaseMap = true },
-               new Layer { Id = 3, IsDeleted = false, Name = "OSM Hot", Url = "https://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", LayerGroupId = 1, IsBaseMap = true }
-            );
+            //modelBuilder.Entity<Layer>().HasData(
+            //   new Layer { Id = 1, IsDeleted = false, Name = "Carto Light", Url = "https://{a-d}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", LayerGroupId = 1, IsBaseMap = true },
+            //   new Layer { Id = 2, IsDeleted = false, Name = "OSM Standart", Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png", LayerGroupId = 1, IsBaseMap = true },
+            //   new Layer { Id = 3, IsDeleted = false, Name = "OSM Hot", Url = "https://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", LayerGroupId = 1, IsBaseMap = true }
+            //);
         }
     }
 }

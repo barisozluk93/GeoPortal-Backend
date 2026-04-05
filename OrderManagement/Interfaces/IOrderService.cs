@@ -1,12 +1,13 @@
-﻿using OrderManagement.Entity;
+﻿using MailKit.Search;
+using OrderManagement.Entity;
 using OrderManagement.Model;
 
 namespace OrderManagement.Interfaces
 {
     public interface IOrderService
     {
-        Task<Result<PagingResult<PagedList<Order>>>> Paginate(PagingParameter pagingParameter, long userId);
-        Task<Result<PagingResult<PagedList<OrderProduct>>>> ComingPaginate(PagingParameter pagingParameter, string token);
+        Task<Result<PagingResult<PagedList<Order>>>> Paginate(PagingParameter pagingParameter, long userId, string? orderNoFiler, double? priceMinFilter, double? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter);
+        Task<Result<PagingResult<PagedList<OrderProduct>>>> ComingPaginate(PagingParameter pagingParameter, string token, string? orderNoFiler, decimal? priceMinFilter, decimal? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter);
         Task<Result<List<Order>>> GetOrderList(long userId);
         Task<Result<Order>> Save(Order product, string token);
         Task<Result<OrderProduct>> UpdateStatus(OrderProduct orderProduct, string token);

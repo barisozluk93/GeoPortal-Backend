@@ -54,6 +54,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
+builder.Host.UseWindowsService();
 
 var app = builder.Build();
 

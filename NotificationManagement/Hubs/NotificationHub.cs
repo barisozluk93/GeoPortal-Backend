@@ -7,12 +7,19 @@ namespace NotificationManagement.Hubs
     [Authorize]
     public class NotificationHub : Hub
     {
+        private string? GetCurrentUserId()
+        {
+            return Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? Context.User?.FindFirst("id")?.Value;
+        }
+
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = GetCurrentUserId();
 
             if (!string.IsNullOrEmpty(userId))
             {
+                Console.WriteLine($"[Hub Connected] Conn={Context.ConnectionId} UserId={userId}");
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"user:{userId}");
             }
 
@@ -21,10 +28,11 @@ namespace NotificationManagement.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = GetCurrentUserId();
 
             if (!string.IsNullOrEmpty(userId))
             {
+                Console.WriteLine($"[Hub Disconnected] Conn={Context.ConnectionId} UserId={userId}");
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user:{userId}");
             }
 

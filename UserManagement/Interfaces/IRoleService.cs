@@ -5,7 +5,7 @@ namespace UserManagement.Interfaces
 {
     public interface IRoleService
     {
-        Task<Result<PagingResult<PagedList<Role>>>> Paginate(PagingParameter pagingParameter);
+        Task<Result<PagingResult<PagedList<Role>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameFilter);
         Task<Result<List<Role>>> GetRoles();
         Task<Result<Role>> Save(Role role);
         Task<Result<Role>> Update(Role role);

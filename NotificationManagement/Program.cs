@@ -57,7 +57,7 @@ builder.Services.AddAuthentication(options =>
         {
             var path = context.HttpContext.Request.Path;
 
-            if (path.StartsWithSegments("/notificationHub"))
+            if (path.StartsWithSegments("/NotificationHubForGeoPortal"))
             {
                 var accessToken = context.Request.Query["access_token"].ToString();
 
@@ -110,6 +110,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Host.UseWindowsService();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -135,8 +137,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<NotificationHub>("/notificationHub");
-
-//app.Run("http://locahost:5029");
+app.MapHub<NotificationHub>("/NotificationHubForGeoPortal");
 
 app.Run();

@@ -298,51 +298,5 @@ namespace OrderManagement.Services
 
             return result;
         }
-
-        private async Task<FileContentResult> GetFileResult(long id, string token)
-        {
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync(_configuration["AppSettings:ApiUrl"] + "/geoPortalApi/File/" + id);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseStr = await response.Content.ReadAsStringAsync();
-
-                if (!string.IsNullOrEmpty(responseStr))
-                {
-                    try
-                    {
-                        Result<Model.File> result = JsonConvert.DeserializeObject<Result<Model.File>>(responseStr);
-
-                        if (result != null)
-                        {
-                            byte[] bytes = System.IO.File.ReadAllBytes(result.GetData().Path);
-                            return new FileContentResult(bytes, result.GetData().ContentType);
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        return null;
-                    }
-
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                return null;
-            }
-
-            return null;
-        }
     }
 }

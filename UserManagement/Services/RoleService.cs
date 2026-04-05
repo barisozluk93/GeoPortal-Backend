@@ -16,24 +16,26 @@ namespace UserManagement.Services
             _dbContext = dbContext;
         }
 
-        public async Task<Result<PagingResult<PagedList<Role>>>> Paginate(PagingParameter pagingParameter)
+        public async Task<Result<PagingResult<PagedList<Role>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameFilter)
         {
             var result = new Result<PagingResult<PagedList<Role>>>();
 
-            string lowerFilterText = string.IsNullOrEmpty(pagingParameter.FilterText) ? null : pagingParameter.FilterText.ToLower();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
-                    var queryable = _dbContext.Roles.Where(x=> (String.IsNullOrEmpty(lowerFilterText) || (x.Name.ToLower().Contains(lowerFilterText)))).Select(s => new Role()
-                    {
-                        Id = s.Id,
-                        Name = s.Name,
-                        IsDeleted = s.IsDeleted,
-                        IsSystemData = s.IsSystemData,
-                        Permissions = _dbContext.RolePermissions.Where(x => !x.IsDeleted && x.RoleId == s.Id).Select(p => p.PermissionId).ToList()
-                    });
+                    var queryable = _dbContext.Roles
+                        .Where(x => (isDeletedFilter.HasValue ? x.IsDeleted == isDeletedFilter : true) && 
+                                    (!String.IsNullOrEmpty(nameFilter) ? x.Name.ToLower().Contains(nameFilter.ToLower()) : true))
+                        .Select(s => new Role()
+                        {
+                            Id = s.Id,
+                            Name = s.Name,
+                            IsDeleted = s.IsDeleted,
+                            IsSystemData = s.IsSystemData,
+                            Permissions = _dbContext.RolePermissions.Where(x => !x.IsDeleted && x.RoleId == s.Id).Select(p => p.PermissionId).ToList()
+                        });
 
                     var pagination = PagedList<Role>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
 
@@ -206,14 +208,19 @@ namespace UserManagement.Services
                     {
                         oldRole.IsDeleted = true;
 
-                        var userRole = await _dbContext.UserRoles.Where(x => x.RoleId == oldRole.Id).FirstOrDefaultAsync();
-                        _dbContext.UserRoles.RemoveRange(userRole);
+                        var userRoles = await _dbContext.UserRoles.Where(x => x.RoleId == oldRole.Id).ToListAsync();
+                        if (userRoles != null && userRoles.Count() > 0)
+                        {
+                            _dbContext.UserRoles.RemoveRange(userRoles);
+                        }
 
                         var rolePermissions = await _dbContext.RolePermissions.Where(x => x.RoleId == oldRole.Id).ToListAsync();
                         _dbContext.RolePermissions.RemoveRange(rolePermissions);
 
                         var permissions = rolePermissions.Select(s => s.PermissionId).ToList();
-                        var userPermissions = await _dbContext.UserPermissions.Where(x => permissions.Contains(x.PermissionId)).ToListAsync();
+                        var users = userRoles != null ? userRoles.Select(s => s.UserId).ToList() : new List<long>();
+
+                        var userPermissions = await _dbContext.UserPermissions.Where(x => users.Contains(x.UserId) && permissions.Contains(x.PermissionId)).ToListAsync();
                         _dbContext.UserPermissions.RemoveRange(userPermissions);
 
 

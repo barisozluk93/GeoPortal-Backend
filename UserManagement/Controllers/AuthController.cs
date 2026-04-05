@@ -65,19 +65,11 @@ namespace UserManagement.Controllers
 
         [HttpPost("ChangePassword")]
         [Authorize]
+        [HasPermission("ProfileScene.ChangePassword.Permission")]
+
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
             var result = await authService.ChangePassword(request);
-
-            return new OkObjectResult(result);
-        }
-
-        [HttpGet("GetApiKey/{userId}")]
-        [Authorize]
-        [HasPermission("ApiKey.Buy.Permission")]
-        public async Task<IActionResult> GetApiKey(long userId)
-        {
-            var result = await authService.GenerateApiKey(userId);
 
             return new OkObjectResult(result);
         }

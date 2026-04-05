@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OrderManagement.Authorization;
 using OrderManagement.Entity;
 using OrderManagement.Interfaces;
 
@@ -18,6 +19,7 @@ namespace OrderManagement.Controllers
 
         [HttpGet("BasketList/{userId}")]
         [Authorize]
+        [HasPermission("BasketScene.List.Permission")]
         public async Task<IActionResult> GetBasketList(long userId)
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
@@ -27,7 +29,7 @@ namespace OrderManagement.Controllers
 
         [HttpPost("Save")]
         [Authorize]
-
+        [HasPermission("BasketScene.Save.Permission")]
         public async Task<IActionResult> Save([FromBody] Basket basket)
         {
             var result = await _basketService.Save(basket);
@@ -36,7 +38,7 @@ namespace OrderManagement.Controllers
 
         [HttpPost("SaveAll")]
         [Authorize]
-
+        [HasPermission("BasketScene.Save.Permission")]
         public async Task<IActionResult> SaveAll([FromBody] List<Basket> basketList)
         {
             var result = await _basketService.SaveAll(basketList);
@@ -45,6 +47,7 @@ namespace OrderManagement.Controllers
 
         [HttpDelete("Delete/{id}/{productId}")]
         [Authorize]
+        [HasPermission("BasketScene.Delete.Permission")]
         public async Task<IActionResult> Delete(long id, long productId)
         {
             var result = await _basketService.Delete(id, productId);
@@ -53,6 +56,7 @@ namespace OrderManagement.Controllers
 
         [HttpDelete("DeleteAll/{id}/{productId}")]
         [Authorize]
+        [HasPermission("BasketScene.Delete.Permission")]
 
         public async Task<IActionResult> DeleteAll(long id, long productId)
         {
@@ -62,6 +66,7 @@ namespace OrderManagement.Controllers
 
         [HttpGet("OrderBasketList/{id}")]
         [Authorize]
+        [HasPermission("BasketScene.List.Permission")]
         public async Task<IActionResult> GetOrderBasketList(long id)
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();

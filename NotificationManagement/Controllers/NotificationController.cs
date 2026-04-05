@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NotificationManagement.Authorization;
 using NotificationManagement.Entity;
 using NotificationManagement.Interfaces;
 using NotificationManagement.Model;
@@ -21,6 +22,7 @@ namespace NotificationManagement.Controllers
 
         [HttpGet("All/{userId}")]
         [Authorize]
+        [HasPermission("NotificationScene.All.Permission")]
         public async Task<IActionResult> GetAll(long userId)
         {
             var result = await _notificationService.GetNotifications(userId);
@@ -28,7 +30,8 @@ namespace NotificationManagement.Controllers
         }
 
         [HttpPost("Save")]
-        [AllowAnonymous]
+        [Authorize]
+        [HasPermission("NotificationScene.Save.Permission")]
         public async Task<IActionResult> Save([FromBody] Notification notification)
         {
             var result = await _notificationService.Save(notification);
@@ -37,6 +40,7 @@ namespace NotificationManagement.Controllers
 
         [HttpDelete("Delete/{id}")]
         [Authorize]
+        [HasPermission("NotificationScene.Delete.Permission")]
         public async Task<IActionResult> Delete(long id)
         {
             var result = await _notificationService.Delete(id);
@@ -45,6 +49,7 @@ namespace NotificationManagement.Controllers
 
         [HttpGet("Read/{id}")]
         [Authorize]
+        [HasPermission("NotificationScene.Read.Permission")]
         public async Task<IActionResult> Read(long id)
         {
             var result = await _notificationService.Read(id);
@@ -53,6 +58,7 @@ namespace NotificationManagement.Controllers
 
         [HttpGet("UnreadCount/{userId}")]
         [Authorize]
+        [HasPermission("NotificationScene.Unread.Permission")]
         public async Task<IActionResult> UnreadCount(long userId)
         {
             var result = await _notificationService.GetUnreadCount(userId);

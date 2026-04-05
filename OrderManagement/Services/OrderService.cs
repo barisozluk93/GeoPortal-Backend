@@ -1,16 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Data;
-using OrderManagement.Interfaces;
-using OrderManagement.DbContexts;
-using OrderManagement.Model;
-using OrderManagement.Entity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
+using OrderManagement.DbContexts;
+using OrderManagement.Entity;
 using OrderManagement.Enums;
-using System.Text;
-using System.Security.Cryptography;
 using OrderManagement.Handler;
+using OrderManagement.Interfaces;
+using OrderManagement.Model;
+using System.Data;
+using System.Globalization;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace OrderManagement.Services
 {
@@ -28,28 +29,46 @@ namespace OrderManagement.Services
             _configuration = configuration;
         }
 
-        public async Task<Result<PagingResult<PagedList<Order>>>> Paginate(PagingParameter pagingParameter, long userId)
+        public async Task<Result<PagingResult<PagedList<Order>>>> Paginate(PagingParameter pagingParameter, long userId, string? orderNoFiler, double? priceMinFilter, double? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter)
         {
             var result = new Result<PagingResult<PagedList<Order>>>();
-
-            string lowerFilterText = string.IsNullOrEmpty(pagingParameter.FilterText) ? null : pagingParameter.FilterText.ToLower();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
-                    var queryable = _dbContext.Orders.Include(x => x.Basket).Where(x => x.UserId == userId
-                    && (String.IsNullOrEmpty(lowerFilterText) || (x.OrderNo.ToLower().Contains(lowerFilterText))) ).Select(s => new Order
+                    DateTime? orderDateFrom = null;
+                    DateTime? orderDateTo = null;
+
+                    if (!string.IsNullOrWhiteSpace(orderDateFromFilter) &&
+                        DateTime.TryParse(orderDateFromFilter, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFrom))
                     {
-                        Id = s.Id,
-                        Price = s.Price,
-                        BasketId = s.BasketId,
-                        Basket = s.Basket,
-                        UserId = s.UserId,
-                        OrderDate = s.OrderDate,
-                        OrderNo = s.OrderNo,
-                        OrderStatus = s.OrderStatus,
-                    });
+                        orderDateFrom = parsedFrom;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(orderDateToFilter) &&
+                        DateTime.TryParse(orderDateToFilter, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTo))
+                    {
+                        orderDateTo = parsedTo;
+                    }
+
+                    var queryable = _dbContext.Orders.Include(x => x.Basket)
+                                                .Where(x => x.UserId == userId &&
+                                                (!String.IsNullOrEmpty(orderNoFiler) ? x.OrderNo.ToLower().Contains(orderNoFiler.ToLower()) : true) &&
+                                                            (priceMaxFilter.HasValue ? x.Price <= priceMaxFilter : true) && (priceMinFilter.HasValue ? x.Price >= priceMinFilter : true) &&
+                                                            (orderDateFrom.HasValue ? x.OrderDate >= orderDateFrom.Value : true) && (orderDateTo.HasValue ? x.OrderDate <= orderDateTo.Value : true) &&
+                                                            (orderStatusStrFilter.HasValue ? x.OrderStatus == orderStatusStrFilter : true))
+                                                .Select(s => new Order
+                                                {
+                                                    Id = s.Id,
+                                                    Price = s.Price,
+                                                    BasketId = s.BasketId,
+                                                    Basket = s.Basket,
+                                                    UserId = s.UserId,
+                                                    OrderDate = s.OrderDate,
+                                                    OrderNo = s.OrderNo,
+                                                    OrderStatus = s.OrderStatus,
+                        });
 
                     var pagination = PagedList<Order>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
 
@@ -71,26 +90,43 @@ namespace OrderManagement.Services
             return result;
         }
 
-        public async Task<Result<PagingResult<PagedList<OrderProduct>>>> ComingPaginate(PagingParameter pagingParameter, string token)
+        public async Task<Result<PagingResult<PagedList<OrderProduct>>>> ComingPaginate(PagingParameter pagingParameter, string token, string? orderNoFiler, decimal? priceMinFilter, decimal? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter)
         {
             var result = new Result<PagingResult<PagedList<OrderProduct>>>();
-
-            string lowerFilterText = string.IsNullOrEmpty(pagingParameter.FilterText) ? null : pagingParameter.FilterText.ToLower();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
-                    var queryable = _dbContext.OrderProducts.Include(x => x.Order).Include(x => x.Product).Where(x =>
-                    (String.IsNullOrEmpty(lowerFilterText) || (x.Order.OrderNo.ToLower().Contains(lowerFilterText))) ).Select(s => new OrderProduct
+                    DateTime? orderDateFrom = null;
+                    DateTime? orderDateTo = null;
+
+                    if (!string.IsNullOrWhiteSpace(orderDateFromFilter) &&
+                        DateTime.TryParse(orderDateFromFilter, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFrom))
                     {
-                        Id = s.Id,
-                        ProccessDate = s.ProccessDate,
-                        Order = s.Order,
-                        OrderStatus = s.OrderStatus,
-                        ProductId = s.ProductId,
-                        Product = s.Product
-                    });
+                        orderDateFrom = parsedFrom;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(orderDateToFilter) &&
+                        DateTime.TryParse(orderDateToFilter, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTo))
+                    {
+                        orderDateTo = parsedTo;
+                    }
+
+                    var queryable = _dbContext.OrderProducts.Include(x => x.Order).Include(x => x.Product).Include(x => x.Product)
+                        .Where(x => (!String.IsNullOrEmpty(orderNoFiler) ? x.Order.OrderNo.ToLower().Contains(orderNoFiler.ToLower()) : true) &&
+                                    (priceMaxFilter.HasValue ? x.Product.Price <= priceMaxFilter : true) && (priceMinFilter.HasValue ? x.Product.Price >= priceMinFilter : true) &&
+                                    (orderDateFrom.HasValue ? x.Order.OrderDate >= orderDateFrom.Value : true) && (orderDateTo.HasValue ? x.Order.OrderDate <= orderDateTo.Value : true) &&
+                                    (orderStatusStrFilter.HasValue ? x.OrderStatus == orderStatusStrFilter : true))
+                        .Select(s => new OrderProduct
+                        {
+                            Id = s.Id,
+                            ProccessDate = s.ProccessDate,
+                            Order = s.Order,
+                            OrderStatus = s.OrderStatus,
+                            ProductId = s.ProductId,
+                            Product = s.Product
+                        });
 
                     var pagination = PagedList<OrderProduct>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
                     result.SetData(new PagingResult<PagedList<OrderProduct>>()

@@ -31,6 +31,11 @@
         "Path": "MapManagement\\MapManagement.csproj",
         "Action": "Start",
         "DebugTarget": "http"
+      },
+      {
+        "Path": "SupportManagement\\SupportManagement.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
       }
     ]
   }

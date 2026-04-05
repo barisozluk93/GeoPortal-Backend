@@ -22,24 +22,15 @@ namespace UserManagement.Controllers
         [Authorize]
         [HasPermission("UserScene.Paging.Permission")]
 
-        public async Task<IActionResult> Paginate([FromQuery] PagingParameter pagingParameter)
+        public async Task<IActionResult> Paginate([FromQuery] PagingParameter pagingParameter, [FromQuery] bool? isDeleted, [FromQuery] string? nameSurname, [FromQuery] string? username, [FromQuery] string? email, [FromQuery] string? phone)
         {
-            var result = await _userService.Paginate(pagingParameter);
-            return new OkObjectResult(result);
-        }
-
-        [HttpGet("All")]
-        [Authorize]
-
-        public async Task<IActionResult> GetAll()
-        {
-            var result = await _userService.GetUsers();
+            var result = await _userService.Paginate(pagingParameter, isDeleted, nameSurname, username, email, phone);
             return new OkObjectResult(result);
         }
 
         [HttpGet("GetSuperUserList")]
         [Authorize]
-
+        [HasPermission("UserScene.SuperAll.Permission")]
         public async Task<IActionResult> GetSuperUserList()
         {
             var result = await _userService.GetSuperUserList();
@@ -68,7 +59,7 @@ namespace UserManagement.Controllers
 
         [HttpPost("UserProfileEdit")]
         [Authorize]
-
+        [HasPermission("ProfileScene.Edit.Permission")]
         public async Task<IActionResult> UserProfileEdit([FromBody] User user)
         {
             var result = await _userService.Update(user);
@@ -87,7 +78,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("{id}")]
         [Authorize]
-
+        [HasPermission("UserScene.Get.Permission")]
         public async Task<IActionResult> GetById(long id)
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
@@ -98,7 +89,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("UserAvatarUpdate/{id}/{fileId}")]
         [Authorize]
-
+        [HasPermission("ProfileScene.Edit.Permission")]
         public async Task<IActionResult> UserAvatarUpdate(long id, long fileId)
         {
             var result = await _userService.UserAvatarUpdate(id, fileId);
@@ -107,7 +98,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("GetUserPermissions")]
         [Authorize]
-
+        //[HasPermission("UserScene.GetUserPermissionList.Permission")]
         public async Task<IActionResult> GetUserPermissions()
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
@@ -118,6 +109,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("UserAddressList/{userId}")]
         [Authorize]
+        [HasPermission("ProfileScene.AddressList.Permission")]
 
         public async Task<IActionResult> GetUserAddresses(long userId)
         {
@@ -127,7 +119,7 @@ namespace UserManagement.Controllers
 
         [HttpPost("UserAddressSave")]
         [Authorize]
-
+        [HasPermission("ProfileScene.AddressSave.Permission")]
         public async Task<IActionResult> UserAddressSave([FromBody] UserAddress userAddress)
         {
             var result = await _userService.UserAddressSave(userAddress);
@@ -136,7 +128,7 @@ namespace UserManagement.Controllers
 
         [HttpPost("UserAddressUpdate")]
         [Authorize]
-
+        [HasPermission("ProfileScene.AddressEdit.Permission")]
         public async Task<IActionResult> UserAddressUpdate([FromBody] UserAddress userAddress)
         {
             var result = await _userService.UserAddressUpdate(userAddress);
@@ -145,7 +137,7 @@ namespace UserManagement.Controllers
 
         [HttpDelete("UserAddressDelete/{id}")]
         [Authorize]
-
+        [HasPermission("ProfileScene.AddressDelete.Permission")]
         public async Task<IActionResult> UserAddressDelete(long id)
         {
             var result = await _userService.UserAddressDelete(id);
@@ -154,7 +146,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("UserAddressById/{id}")]
         [Authorize]
-
+        [HasPermission("ProfileScene.AddressGet.Permission")]
         public async Task<IActionResult> GetUserAddressById(long id)
         {
             var result = await _userService.GetUserAddressById(id);

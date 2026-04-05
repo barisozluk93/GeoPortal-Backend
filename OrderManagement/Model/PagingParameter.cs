@@ -1,7 +1,7 @@
 ﻿namespace OrderManagement.Model
 {
     public class PagingParameter
-    {
+    {   
         public string? FilterText { get; set; }
         public decimal? MaxPrice { get; set; }
         public int? MaxCloudRate { get; set; }

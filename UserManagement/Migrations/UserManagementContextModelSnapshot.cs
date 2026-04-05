@@ -131,7 +131,7 @@ namespace UserManagement.Migrations
                             Code = "PermissionScene.Paging.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Yetki Ekranı Listeleme Yetkisi"
+                            Name = "Yetki Ekranı Sayfalama Yetkisi"
                         },
                         new
                         {
@@ -160,14 +160,30 @@ namespace UserManagement.Migrations
                         new
                         {
                             Id = 5L,
-                            Code = "RoleScene.Paging.Permission",
+                            Code = "PermissionScene.Get.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Rol Ekranı Listeleme Yetkisi"
+                            Name = "Yetki Ekranı Görüntüleme Yetkisi"
                         },
                         new
                         {
                             Id = 6L,
+                            Code = "PermissionScene.All.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Yetki Ekranı Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 7L,
+                            Code = "RoleScene.Paging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Rol Ekranı Sayfalama Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 8L,
                             Code = "RoleScene.Save.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
@@ -175,7 +191,7 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 7L,
+                            Id = 9L,
                             Code = "RoleScene.Edit.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
@@ -183,7 +199,7 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 8L,
+                            Id = 10L,
                             Code = "RoleScene.Delete.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
@@ -191,35 +207,19 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 9L,
-                            Code = "OrganizationScene.Paging.Permission",
-                            IsDeleted = false,
-                            IsSystemData = true,
-                            Name = "Organizasyon Ekranı Listeleme Yetkisi"
-                        },
-                        new
-                        {
-                            Id = 10L,
-                            Code = "OrganizationScene.Save.Permission",
-                            IsDeleted = false,
-                            IsSystemData = true,
-                            Name = "Organizasyon Ekranı Kayıt Yetkisi"
-                        },
-                        new
-                        {
                             Id = 11L,
-                            Code = "OrganizationScene.Edit.Permission",
+                            Code = "RoleScene.Get.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Organizasyon Ekranı Güncelleme Yetkisi"
+                            Name = "Rol Ekranı Görüntüleme Yetkisi"
                         },
                         new
                         {
                             Id = 12L,
-                            Code = "OrganizationScene.Delete.Permission",
+                            Code = "RoleScene.All.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Organizasyon Ekranı Silme Yetkisi"
+                            Name = "Rol Ekranı Listeleme Yetkisi"
                         },
                         new
                         {
@@ -227,7 +227,7 @@ namespace UserManagement.Migrations
                             Code = "UserScene.Paging.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Kullanıcı Ekranı Listeleme Yetkisi"
+                            Name = "Kullanıcı Ekranı Sayfalama Yetkisi"
                         },
                         new
                         {
@@ -256,6 +256,198 @@ namespace UserManagement.Migrations
                         new
                         {
                             Id = 17L,
+                            Code = "UserScene.Get.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Kullanıcı Ekranı Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 18L,
+                            Code = "UserScene.SuperAll.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Kullanıcı Ekranı Super Kullanıcı Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 19L,
+                            Code = "UserScene.GetUserPermissionList.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Kullanıcı Ekranı Kullanıcı Yetki Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 20L,
+                            Code = "ProfileScene.ChangePassword.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Şifre Değiştirme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 21L,
+                            Code = "ProfileScene.Edit.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 22L,
+                            Code = "ProfileScene.AddressList.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Adres Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 23L,
+                            Code = "ProfileScene.AddressSave.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Adres Kayıt Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 24L,
+                            Code = "ProfileScene.AddressEdit.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Adres Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 25L,
+                            Code = "ProfileScene.AddressDelete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Adres Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 26L,
+                            Code = "ProfileScene.AddressGet.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Profil Ekranı Adres Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 27L,
+                            Code = "NotificationScene.All.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Bildirim Ekranı Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 28L,
+                            Code = "NotificationScene.Save.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Bildirim Ekranı Kayıt Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 29L,
+                            Code = "NotificationScene.Read.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Bildirim Ekranı Okuma Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 30L,
+                            Code = "NotificationScene.Unread.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Bildirim Ekranı Okunmamış Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 31L,
+                            Code = "NotificationScene.Delete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Bildirim Ekranı Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 32L,
+                            Code = "OrderScene.Paging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Sayfalama Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 33L,
+                            Code = "OrderScene.Edit.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 34L,
+                            Code = "OrderScene.Save.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Kayıt Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 35L,
+                            Code = "OrderScene.Get.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 36L,
+                            Code = "OrderScene.InvoiceSave.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Fatura Yükleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 37L,
+                            Code = "OrderScene.InvoiceDelete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Fatura Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 38L,
+                            Code = "BasketScene.List.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sepet Ekranı Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 39L,
+                            Code = "BasketScene.Save.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sepet Ekranı Kayıt Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 40L,
+                            Code = "BasketScene.Delete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sepet Ekranı Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 41L,
                             Code = "DashboardScene.View.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
@@ -263,7 +455,7 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 18L,
+                            Id = 42L,
                             Code = "FileScene.Delete.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
@@ -271,7 +463,7 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 19L,
+                            Id = 43L,
                             Code = "FileScene.Save.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
@@ -279,27 +471,131 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 20L,
-                            Code = "OrderScene.Paging.Permission",
+                            Id = 44L,
+                            Code = "LayerGroupScene.Paging.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Sipariş Ekranı Listeleme Yetkisi"
+                            Name = "Harita Ekranı Katman Grubu Sayfalama Yetkisi"
                         },
                         new
                         {
-                            Id = 21L,
-                            Code = "MapScene.LayerGroupList.Permission",
+                            Id = 45L,
+                            Code = "LayerGroupScene.Save.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "Harita Ekranı Katman Listeleme Yetkisi"
+                            Name = "Harita Ekranı Katman Grubu Kayıt Yetkisi"
                         },
                         new
                         {
-                            Id = 22L,
-                            Code = "ApiKey.Buy.Permission",
+                            Id = 46L,
+                            Code = "LayerGroupScene.Edit.Permission",
                             IsDeleted = false,
                             IsSystemData = true,
-                            Name = "API Key Satın Alma Yetkisi"
+                            Name = "Harita Ekranı Katman Grubu Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 47L,
+                            Code = "LayerGroupScene.Delete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Grubu Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 48L,
+                            Code = "LayerGroupScene.Get.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Grubu Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 49L,
+                            Code = "LayerScene.Paging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Sayfalama Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 50L,
+                            Code = "LayerScene.Save.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Kayıt Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 51L,
+                            Code = "LayerScene.Edit.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 52L,
+                            Code = "LayerScene.Delete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 53L,
+                            Code = "LayerScene.Get.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 54L,
+                            Code = "LayerGroupScene.All.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Harita Ekranı Katman Grubu Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 55L,
+                            Code = "OrderScene.CustomerPaging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Sipariş Ekranı Müşteri Sayfalama Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 56L,
+                            Code = "SupportScene.Paging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Destek Ekranı Sayfalama Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 57L,
+                            Code = "SupportScene.Get.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Destek Ekranı Görüntüleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 58L,
+                            Code = "SupportScene.Edit.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Destek Ekranı Durum Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 59L,
+                            Code = "SupportScene.Reply.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Destek Ekranı Cevaplama Yetkisi"
                         });
                 });
 
@@ -510,51 +806,429 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 24L,
+                            Id = 21L,
                             IsDeleted = false,
                             PermissionId = 21L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 22L,
+                            IsDeleted = false,
+                            PermissionId = 22L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 23L,
+                            IsDeleted = false,
+                            PermissionId = 23L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 24L,
+                            IsDeleted = false,
+                            PermissionId = 24L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 25L,
+                            IsDeleted = false,
+                            PermissionId = 25L,
                             RoleId = 1L
                         },
                         new
                         {
                             Id = 26L,
                             IsDeleted = false,
-                            PermissionId = 22L,
+                            PermissionId = 26L,
                             RoleId = 1L
                         },
                         new
                         {
-                            Id = 21L,
+                            Id = 27L,
                             IsDeleted = false,
-                            PermissionId = 17L,
-                            RoleId = 2L
+                            PermissionId = 27L,
+                            RoleId = 1L
                         },
                         new
                         {
-                            Id = 22L,
+                            Id = 28L,
+                            IsDeleted = false,
+                            PermissionId = 28L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 29L,
+                            IsDeleted = false,
+                            PermissionId = 29L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 30L,
+                            IsDeleted = false,
+                            PermissionId = 30L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 31L,
+                            IsDeleted = false,
+                            PermissionId = 31L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 32L,
+                            IsDeleted = false,
+                            PermissionId = 32L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 33L,
+                            IsDeleted = false,
+                            PermissionId = 33L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 34L,
+                            IsDeleted = false,
+                            PermissionId = 34L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 35L,
+                            IsDeleted = false,
+                            PermissionId = 35L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 36L,
+                            IsDeleted = false,
+                            PermissionId = 36L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 37L,
+                            IsDeleted = false,
+                            PermissionId = 37L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 38L,
+                            IsDeleted = false,
+                            PermissionId = 38L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 39L,
+                            IsDeleted = false,
+                            PermissionId = 39L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 40L,
+                            IsDeleted = false,
+                            PermissionId = 40L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 41L,
+                            IsDeleted = false,
+                            PermissionId = 41L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 42L,
+                            IsDeleted = false,
+                            PermissionId = 42L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 43L,
+                            IsDeleted = false,
+                            PermissionId = 43L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 44L,
+                            IsDeleted = false,
+                            PermissionId = 44L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 45L,
+                            IsDeleted = false,
+                            PermissionId = 45L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 46L,
+                            IsDeleted = false,
+                            PermissionId = 46L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 47L,
+                            IsDeleted = false,
+                            PermissionId = 47L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 48L,
+                            IsDeleted = false,
+                            PermissionId = 48L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 49L,
+                            IsDeleted = false,
+                            PermissionId = 49L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 50L,
+                            IsDeleted = false,
+                            PermissionId = 50L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 51L,
+                            IsDeleted = false,
+                            PermissionId = 51L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 52L,
+                            IsDeleted = false,
+                            PermissionId = 52L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 53L,
+                            IsDeleted = false,
+                            PermissionId = 53L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 54L,
+                            IsDeleted = false,
+                            PermissionId = 54L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 55L,
+                            IsDeleted = false,
+                            PermissionId = 56L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 56L,
+                            IsDeleted = false,
+                            PermissionId = 57L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 57L,
+                            IsDeleted = false,
+                            PermissionId = 58L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 58L,
+                            IsDeleted = false,
+                            PermissionId = 59L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 59L,
                             IsDeleted = false,
                             PermissionId = 18L,
                             RoleId = 2L
                         },
                         new
                         {
-                            Id = 23L,
+                            Id = 60L,
                             IsDeleted = false,
                             PermissionId = 19L,
                             RoleId = 2L
                         },
                         new
                         {
-                            Id = 25L,
+                            Id = 61L,
+                            IsDeleted = false,
+                            PermissionId = 20L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 62L,
                             IsDeleted = false,
                             PermissionId = 21L,
                             RoleId = 2L
                         },
                         new
                         {
-                            Id = 27L,
+                            Id = 63L,
                             IsDeleted = false,
                             PermissionId = 22L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 64L,
+                            IsDeleted = false,
+                            PermissionId = 23L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 65L,
+                            IsDeleted = false,
+                            PermissionId = 24L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 66L,
+                            IsDeleted = false,
+                            PermissionId = 25L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 67L,
+                            IsDeleted = false,
+                            PermissionId = 26L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 68L,
+                            IsDeleted = false,
+                            PermissionId = 27L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 69L,
+                            IsDeleted = false,
+                            PermissionId = 28L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 70L,
+                            IsDeleted = false,
+                            PermissionId = 29L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 71L,
+                            IsDeleted = false,
+                            PermissionId = 30L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 72L,
+                            IsDeleted = false,
+                            PermissionId = 31L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 73L,
+                            IsDeleted = false,
+                            PermissionId = 34L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 74L,
+                            IsDeleted = false,
+                            PermissionId = 35L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 75L,
+                            IsDeleted = false,
+                            PermissionId = 38L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 76L,
+                            IsDeleted = false,
+                            PermissionId = 39L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 77L,
+                            IsDeleted = false,
+                            PermissionId = 40L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 78L,
+                            IsDeleted = false,
+                            PermissionId = 42L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 79L,
+                            IsDeleted = false,
+                            PermissionId = 43L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 80L,
+                            IsDeleted = false,
+                            PermissionId = 17L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 81L,
+                            IsDeleted = false,
+                            PermissionId = 55L,
                             RoleId = 2L
                         });
                 });
@@ -869,51 +1543,429 @@ namespace UserManagement.Migrations
                         },
                         new
                         {
-                            Id = 24L,
+                            Id = 21L,
                             IsDeleted = false,
                             PermissionId = 21L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 22L,
+                            IsDeleted = false,
+                            PermissionId = 22L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 23L,
+                            IsDeleted = false,
+                            PermissionId = 23L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 24L,
+                            IsDeleted = false,
+                            PermissionId = 24L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 25L,
+                            IsDeleted = false,
+                            PermissionId = 25L,
                             UserId = 1L
                         },
                         new
                         {
                             Id = 26L,
                             IsDeleted = false,
-                            PermissionId = 22L,
+                            PermissionId = 26L,
                             UserId = 1L
                         },
                         new
                         {
-                            Id = 21L,
+                            Id = 27L,
                             IsDeleted = false,
-                            PermissionId = 17L,
-                            UserId = 2L
+                            PermissionId = 27L,
+                            UserId = 1L
                         },
                         new
                         {
-                            Id = 22L,
+                            Id = 28L,
+                            IsDeleted = false,
+                            PermissionId = 28L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 29L,
+                            IsDeleted = false,
+                            PermissionId = 29L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 30L,
+                            IsDeleted = false,
+                            PermissionId = 30L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 31L,
+                            IsDeleted = false,
+                            PermissionId = 31L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 32L,
+                            IsDeleted = false,
+                            PermissionId = 32L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 33L,
+                            IsDeleted = false,
+                            PermissionId = 33L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 34L,
+                            IsDeleted = false,
+                            PermissionId = 34L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 35L,
+                            IsDeleted = false,
+                            PermissionId = 35L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 36L,
+                            IsDeleted = false,
+                            PermissionId = 36L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 37L,
+                            IsDeleted = false,
+                            PermissionId = 37L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 38L,
+                            IsDeleted = false,
+                            PermissionId = 38L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 39L,
+                            IsDeleted = false,
+                            PermissionId = 39L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 40L,
+                            IsDeleted = false,
+                            PermissionId = 40L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 41L,
+                            IsDeleted = false,
+                            PermissionId = 41L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 42L,
+                            IsDeleted = false,
+                            PermissionId = 42L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 43L,
+                            IsDeleted = false,
+                            PermissionId = 43L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 44L,
+                            IsDeleted = false,
+                            PermissionId = 44L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 45L,
+                            IsDeleted = false,
+                            PermissionId = 45L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 46L,
+                            IsDeleted = false,
+                            PermissionId = 46L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 47L,
+                            IsDeleted = false,
+                            PermissionId = 47L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 48L,
+                            IsDeleted = false,
+                            PermissionId = 48L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 49L,
+                            IsDeleted = false,
+                            PermissionId = 49L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 50L,
+                            IsDeleted = false,
+                            PermissionId = 50L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 51L,
+                            IsDeleted = false,
+                            PermissionId = 51L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 52L,
+                            IsDeleted = false,
+                            PermissionId = 52L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 53L,
+                            IsDeleted = false,
+                            PermissionId = 53L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 54L,
+                            IsDeleted = false,
+                            PermissionId = 54L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 55L,
+                            IsDeleted = false,
+                            PermissionId = 56L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 56L,
+                            IsDeleted = false,
+                            PermissionId = 57L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 57L,
+                            IsDeleted = false,
+                            PermissionId = 58L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 58L,
+                            IsDeleted = false,
+                            PermissionId = 59L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 59L,
                             IsDeleted = false,
                             PermissionId = 18L,
                             UserId = 2L
                         },
                         new
                         {
-                            Id = 23L,
+                            Id = 60L,
                             IsDeleted = false,
                             PermissionId = 19L,
                             UserId = 2L
                         },
                         new
                         {
-                            Id = 25L,
+                            Id = 61L,
+                            IsDeleted = false,
+                            PermissionId = 20L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 62L,
                             IsDeleted = false,
                             PermissionId = 21L,
                             UserId = 2L
                         },
                         new
                         {
-                            Id = 27L,
+                            Id = 63L,
                             IsDeleted = false,
                             PermissionId = 22L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 64L,
+                            IsDeleted = false,
+                            PermissionId = 23L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 65L,
+                            IsDeleted = false,
+                            PermissionId = 24L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 66L,
+                            IsDeleted = false,
+                            PermissionId = 25L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 67L,
+                            IsDeleted = false,
+                            PermissionId = 26L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 68L,
+                            IsDeleted = false,
+                            PermissionId = 27L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 69L,
+                            IsDeleted = false,
+                            PermissionId = 28L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 70L,
+                            IsDeleted = false,
+                            PermissionId = 29L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 71L,
+                            IsDeleted = false,
+                            PermissionId = 30L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 72L,
+                            IsDeleted = false,
+                            PermissionId = 31L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 73L,
+                            IsDeleted = false,
+                            PermissionId = 34L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 74L,
+                            IsDeleted = false,
+                            PermissionId = 35L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 75L,
+                            IsDeleted = false,
+                            PermissionId = 38L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 76L,
+                            IsDeleted = false,
+                            PermissionId = 39L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 77L,
+                            IsDeleted = false,
+                            PermissionId = 40L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 78L,
+                            IsDeleted = false,
+                            PermissionId = 42L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 79L,
+                            IsDeleted = false,
+                            PermissionId = 43L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 80L,
+                            IsDeleted = false,
+                            PermissionId = 17L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 81L,
+                            IsDeleted = false,
+                            PermissionId = 55L,
                             UserId = 2L
                         });
                 });

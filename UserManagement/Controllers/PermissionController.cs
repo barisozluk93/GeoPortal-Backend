@@ -21,15 +21,15 @@ namespace UserManagement.Controllers
         [HttpGet("Paginate")]
         [Authorize]
         [HasPermission("PermissionScene.Paging.Permission")]
-        public async Task<IActionResult> Paginate([FromQuery] PagingParameter pagingParameter)
+        public async Task<IActionResult> Paginate([FromQuery] PagingParameter pagingParameter, [FromQuery] bool? isDeleted, [FromQuery] string? name, [FromQuery] string? code)
         {
-            var result = await _permissionService.Paginate(pagingParameter);
+            var result = await _permissionService.Paginate(pagingParameter, isDeleted, name, code);
             return new OkObjectResult(result);
         }
 
         [HttpGet("All")]
         [Authorize]
-
+        [HasPermission("PermissionScene.All.Permission")]
         public async Task<IActionResult> GetAll()
         {
             var result = await _permissionService.GetPermissions();
@@ -68,7 +68,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("{id}")]
         [Authorize]
-
+        [HasPermission("PermissionScene.Get.Permission")]
         public async Task<IActionResult> GetById(long id)
         {
             var result = await _permissionService.GetById(id);

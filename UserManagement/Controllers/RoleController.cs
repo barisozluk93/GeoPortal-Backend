@@ -22,14 +22,15 @@ namespace UserManagement.Controllers
         [Authorize]
         [HasPermission("RoleScene.Paging.Permission")]
 
-        public async Task<IActionResult> Paginate([FromQuery] PagingParameter pagingParameter)
+        public async Task<IActionResult> Paginate([FromQuery] PagingParameter pagingParameter, [FromQuery] bool? isDeleted, [FromQuery] string? name)
         {
-            var result = await _roleService.Paginate(pagingParameter);
+            var result = await _roleService.Paginate(pagingParameter, isDeleted, name);
             return new OkObjectResult(result);
         }
 
         [HttpGet("All")]
         [Authorize]
+        [HasPermission("RoleScene.All.Permission")]
 
         public async Task<IActionResult> GetAll()
         {
@@ -69,6 +70,7 @@ namespace UserManagement.Controllers
 
         [HttpGet("{id}")]
         [Authorize]
+        [HasPermission("RoleScene.Get.Permission")]
 
         public async Task<IActionResult> GetById(long id)
         {

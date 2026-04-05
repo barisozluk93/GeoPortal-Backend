@@ -33,18 +33,20 @@ namespace UserManagement.Services
             this.configuration = configuration;
         }
 
-        public async Task<Result<PagingResult<PagedList<User>>>> Paginate(PagingParameter pagingParameter)
+        public async Task<Result<PagingResult<PagedList<User>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameSurnameFilter, string? usernameFilter, string? emailFilter, string? phoneFilter)
         {
             var result = new Result<PagingResult<PagedList<User>>>();
-
-            string lowerFilterText = string.IsNullOrEmpty(pagingParameter.FilterText) ? null : pagingParameter.FilterText.ToLower();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
                     var queryable = _dbContext.Users
-                        .Where(x => (String.IsNullOrEmpty(lowerFilterText) || (x.Name.ToLower().Contains(lowerFilterText)) || x.Surname.ToLower().Contains(lowerFilterText)))
+                        .Where(x => (isDeletedFilter.HasValue ? x.IsDeleted == isDeletedFilter : true) &&
+                                    (!String.IsNullOrEmpty(nameSurnameFilter) ? (x.Name + " " + x.Surname).ToLower().Contains(nameSurnameFilter.ToLower()) : true) &&
+                                    (!String.IsNullOrEmpty(usernameFilter) ? x.Username.ToLower().Contains(usernameFilter.ToLower()) : true) &&
+                                    (!String.IsNullOrEmpty(emailFilter) ? x.Email.ToLower().Contains(emailFilter.ToLower()) : true) &&
+                                    (!String.IsNullOrEmpty(phoneFilter) ? x.Phone.ToLower().Contains(phoneFilter.ToLower()) : true))
                         .Select(s => new User()
                     {
                         Id = s.Id,
@@ -424,7 +426,7 @@ namespace UserManagement.Services
             {
                 try
                 {
-                    if (!_dbContext.UserAddresses.Where(x => (x.AddressHeader == userAddress.AddressHeader) && !x.IsDeleted).Any())
+                    if (!_dbContext.UserAddresses.Where(x => (x.AddressHeader == userAddress.AddressHeader) && x.UserId == userAddress.UserId && !x.IsDeleted).Any())
                     {
                         _dbContext.Add(userAddress);
                         await _dbContext.SaveChangesAsync();
@@ -463,7 +465,7 @@ namespace UserManagement.Services
 
                     if (oldAddress != null)
                     {
-                        if (!_dbContext.UserAddresses.Where(x => x.Id != oldAddress.Id && (x.AddressHeader == userAddress.AddressHeader) && !x.IsDeleted).Any())
+                        if (!_dbContext.UserAddresses.Where(x => x.Id != oldAddress.Id && (x.AddressHeader == userAddress.AddressHeader) && x.UserId == userAddress.UserId && !x.IsDeleted).Any())
                         {
                             oldAddress.Name = userAddress.Name;
                             oldAddress.Surname = userAddress.Surname;

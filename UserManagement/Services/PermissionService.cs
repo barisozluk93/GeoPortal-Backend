@@ -16,17 +16,18 @@ namespace UserManagement.Services
             _dbContext = dbContext;
         }
 
-        public async Task<Result<PagingResult<PagedList<Permission>>>> Paginate(PagingParameter pagingParameter)
+        public async Task<Result<PagingResult<PagedList<Permission>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameFilter, string? codeFilter)
         {
             var result = new Result<PagingResult<PagedList<Permission>>>();
-
-            string lowerFilterText = string.IsNullOrEmpty(pagingParameter.FilterText) ? null : pagingParameter.FilterText.ToLower();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
-                    var queryable = _dbContext.Permissions.Where(x => (String.IsNullOrEmpty(lowerFilterText) || (x.Name.ToLower().Contains(lowerFilterText))));
+                    var queryable = _dbContext.Permissions
+                                .Where(x => (isDeletedFilter.HasValue ? x.IsDeleted == isDeletedFilter : true) &&
+                                            (!String.IsNullOrEmpty(nameFilter) ? x.Name.ToLower().Contains(nameFilter.ToLower()) : true) &&
+                                            (!String.IsNullOrEmpty(codeFilter) ? x.Code.ToLower().Contains(codeFilter.ToLower()) : true));
                     var pagination = PagedList<Permission>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
 
                     result.SetData(new PagingResult<PagedList<Permission>> ()

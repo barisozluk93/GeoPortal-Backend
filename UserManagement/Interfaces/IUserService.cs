@@ -1,11 +1,12 @@
-﻿using UserManagement.Entity;
+﻿using System.Numerics;
+using UserManagement.Entity;
 using UserManagement.Model;
 
 namespace UserManagement.Interfaces
 {
     public interface IUserService
     {
-        Task<Result<PagingResult<PagedList<User>>>> Paginate(PagingParameter pagingParameter);
+        Task<Result<PagingResult<PagedList<User>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameSurnameFilter, string? usernameFilter, string? emailFilter, string? phoneFilter);
         Task<Result<List<User>>> GetUsers();
         Task<Result<List<long>>> GetSuperUserList();
         Task<Result<User>> Save(User user);

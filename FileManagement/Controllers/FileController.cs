@@ -35,7 +35,6 @@ namespace FileManagement.Controllers
         }
 
         [HttpGet("{id}")]
-        //[Authorize]
 
         public async Task<IActionResult> GetById(long id)
         {
