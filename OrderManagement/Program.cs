@@ -8,8 +8,6 @@ using OrderManagement.DbContexts;
 using OrderManagement.Authorization;
 using OrderManagement.Interfaces;
 using OrderManagement.Services;
-using OrderManagement.Handler;
-using Org.BouncyCastle.Asn1.Ocsp;
 
 var builder = WebApplication.CreateBuilder(args);
 var Configuration = builder.Configuration;
@@ -27,7 +25,11 @@ builder.Services.AddDbContext<OrderManagementContext>(options =>
 builder.Services.AddScoped<IBasketService, BasketService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddSingleton<WebSocketHandler>();
+
+builder.Services.AddHttpClient<IExportGateway, ExportGateway>(client =>
+{
+    client.BaseAddress = new Uri(Configuration["AppSettings:ApiUrl"]);
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -80,33 +82,6 @@ app.UseRouting();
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-app.UseWebSockets();
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.Map("/ws", async context =>
-    {
-        if (context.WebSockets.IsWebSocketRequest)
-        {
-            var userId = context.Request.Query["userId"];
-            if (string.IsNullOrEmpty(userId))
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Missing userId parameter");
-                return;
-            }
-
-            var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-            var webSocketHandler = context.RequestServices.GetService<WebSocketHandler>();
-            await webSocketHandler.HandleWebSocketAsync(webSocket, Convert.ToInt64(userId));
-        }
-        else
-        {
-            context.Response.StatusCode = 400;
-        }
-    });
-});
 
 app.UseHttpsRedirection();
 

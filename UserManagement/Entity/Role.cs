@@ -14,5 +14,8 @@ namespace UserManagement.Entity
 
         [NotMapped]
         public List<long> Permissions { get; set; } = new List<long>();
+
+        [NotMapped]
+        public List<string> PermissionNames { get; set; } = new List<string>();
     }
 }

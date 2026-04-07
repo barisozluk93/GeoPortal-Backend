@@ -103,5 +103,19 @@ namespace OrderManagement.Controllers
             var result = await _orderService.DeleteInvoice(id, token);
             return new OkObjectResult(result);
         }
+
+        [HttpPost("Export/Excel")]
+        [Authorize]
+        [HasPermission("Table.Export.Permission")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            var result = await _orderService.ExportExcel(token);
+            return File(
+                result,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Sipariþler{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        }
     }
 }

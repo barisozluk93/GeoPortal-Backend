@@ -179,13 +179,25 @@
       ],
       "UpstreamPathTemplate": "/geoPortalApi/Product/{everything}",
       "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
-    }
-  ],
-  "GlobalConfiguration": {
-    "BaseUrl": "http://localhost:5065"
+    },
+    {
+        "DownstreamPathTemplate": "/geoPortalApi/Export/{everything}",
+        "DownstreamScheme": "http",
+        "DownstreamHostAndPorts": [
+          {
+            "Host": "localhost",
+            "Port": 5180
+          }
+        ],
+        "UpstreamPathTemplate": "/geoPortalApi/Export/{everything}",
+        "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
+      }
+    ],
+    "GlobalConfiguration": {
+      "BaseUrl": "http://localhost:5065"
 
+    }
   }
-}
 
 //{
 //  "Routes": [
@@ -285,30 +297,30 @@
 //      "UpstreamPathTemplate": "/File/{everything}",
 //      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
 //    },
-      //{
-      //  "DownstreamPathTemplate": "/geoPortalApi/Support/{everything}",
-      //  "DownstreamScheme": "http",
-      //  "DownstreamHostAndPorts": [
-      //    {
-      //      "Host": "localhost",
-      //      "Port": 5049
-      //    }
-      //  ],
-      //  "UpstreamPathTemplate": "/Support/{everything}",
-      //  "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
-      //},
-      //{
-      //  "DownstreamPathTemplate": "/geoPortalApi/Contact/{everything}",
-      //  "DownstreamScheme": "http",
-      //  "DownstreamHostAndPorts": [
-      //    {
-      //      "Host": "localhost",
-      //      "Port": 5049
-      //    }
-      //  ],
-      //  "UpstreamPathTemplate": "/Contact/{everything}",
-      //  "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
-      //},
+//    {
+//      "DownstreamPathTemplate": "/geoPortalApi/Support/{everything}",
+//      "DownstreamScheme": "http",
+//      "DownstreamHostAndPorts": [
+//        {
+//          "Host": "localhost",
+//          "Port": 5049
+//        }
+//      ],
+//      "UpstreamPathTemplate": "/Support/{everything}",
+//      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
+//    },
+//    {
+//      "DownstreamPathTemplate": "/geoPortalApi/Contact/{everything}",
+//      "DownstreamScheme": "http",
+//      "DownstreamHostAndPorts": [
+//        {
+//          "Host": "localhost",
+//          "Port": 5049
+//        }
+//      ],
+//      "UpstreamPathTemplate": "/Contact/{everything}",
+//      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
+//    },
 //    {
 //      "DownstreamPathTemplate": "/geoPortalApi/Basket/{everything}",
 //      "DownstreamScheme": "http",
@@ -356,8 +368,20 @@
 //      ],
 //      "UpstreamPathTemplate": "/Product/{everything}",
 //      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
+//    },
+//    {
+//      "DownstreamPathTemplate": "/geoPortalApi/Export/{everything}",
+//      "DownstreamScheme": "http",
+//      "DownstreamHostAndPorts": [
+//        {
+//          "Host": "localhost",
+//          "Port": 5180
+//        }
+//      ],
+//      "UpstreamPathTemplate": "/Export/{everything}",
+//      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
 //    }
 //  ],
 //  "GlobalConfiguration": {
 //  }
-//}
+////}

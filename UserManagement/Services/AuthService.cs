@@ -343,7 +343,7 @@ namespace UserManagement.Services
                         _dbContext.Add(ur);
                         await _dbContext.SaveChangesAsync();
 
-                        var rolePermissions = await _dbContext.RolePermissions.Where(x => x.RoleId == 4 && !x.IsDeleted).Select(s => s.PermissionId).ToListAsync();
+                        var rolePermissions = await _dbContext.RolePermissions.Where(x => x.RoleId == 2 && !x.IsDeleted).Select(s => s.PermissionId).ToListAsync();
                         foreach (var permission in rolePermissions)
                         {
                             UserPermission up = new UserPermission();
@@ -353,6 +353,40 @@ namespace UserManagement.Services
 
                             _dbContext.Add(up);
                             await _dbContext.SaveChangesAsync();
+                        }
+
+                        if(user.Organizations != null)
+                        {
+                            foreach (var organizationId in user.Organizations)
+                            {
+                                if (organizationId == -1)
+                                {
+                                    if (!await _dbContext.Organizations.AnyAsync(x => x.Name.ToLower().Contains(user.Organization.Name.ToLower()))) {
+                                        _dbContext.Add(user.Organization);
+                                        await _dbContext.SaveChangesAsync();
+                                    }
+                                    else
+                                    {
+                                        user.Organization = await _dbContext.Organizations.Where(x => x.Name.ToLower().Contains(user.Organization.Name.ToLower())).FirstOrDefaultAsync();
+                                    }
+
+                                    OrganizationUser ou = new OrganizationUser();
+                                    ou.OrganizationId = user.Organization.Id;
+                                    ou.UserId = user.Id;
+                                    ou.IsDeleted = false;
+                                    _dbContext.Add(ou);
+                                    await _dbContext.SaveChangesAsync();
+                                }
+                                else
+                                {
+                                    OrganizationUser ou = new OrganizationUser();
+                                    ou.OrganizationId = organizationId;
+                                    ou.UserId = user.Id;
+                                    ou.IsDeleted = false;
+                                    _dbContext.Add(ou);
+                                    await _dbContext.SaveChangesAsync();
+                                }
+                            }
                         }
 
                         transaction.Commit();

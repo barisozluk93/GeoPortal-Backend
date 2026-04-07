@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using OrderManagement.DbContexts;
 using OrderManagement.Entity;
 using OrderManagement.Enums;
-using OrderManagement.Handler;
 using OrderManagement.Interfaces;
 using OrderManagement.Model;
 using System.Data;
@@ -12,6 +11,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OrderManagement.Services
 {
@@ -21,12 +21,19 @@ namespace OrderManagement.Services
 
         private readonly IConfiguration _configuration;
 
+        private readonly IExportGateway _exportGateway;
 
-
-        public OrderService(OrderManagementContext dbContext, IConfiguration configuration)
+        public OrderService(OrderManagementContext dbContext, IConfiguration configuration, IExportGateway exportGateway)
         {
             _dbContext = dbContext;
             _configuration = configuration;
+            _exportGateway = exportGateway;
+        }
+
+        public async Task<byte[]> ExportExcel(string token)
+        {
+            var request = await BuildOrderExportRequest(token);
+            return await _exportGateway.ExportExcelAsync(request, token);
         }
 
         public async Task<Result<PagingResult<PagedList<Order>>>> Paginate(PagingParameter pagingParameter, long userId, string? orderNoFiler, double? priceMinFilter, double? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter)
@@ -68,7 +75,7 @@ namespace OrderManagement.Services
                                                     OrderDate = s.OrderDate,
                                                     OrderNo = s.OrderNo,
                                                     OrderStatus = s.OrderStatus,
-                        });
+                                                });
 
                     var pagination = PagedList<Order>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
 
@@ -973,6 +980,76 @@ namespace OrderManagement.Services
                 .Replace("/", string.Empty)
                 .Replace("=", string.Empty);
         }
+
+        private async Task<ExportRequestModel> BuildOrderExportRequest(string token)
+        {
+            ExportRequestModel request = null;
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var orders = await _dbContext.Orders
+                                            .Select(s => new Order
+                                            {
+                                                Id = s.Id,
+                                                Price = s.Price,
+                                                BasketId = s.BasketId,
+                                                Basket = s.Basket,
+                                                UserId = s.UserId,
+                                                OrderDate = s.OrderDate,
+                                                OrderNo = s.OrderNo,
+                                                OrderStatus = s.OrderStatus,
+                                                OrderProducts = _dbContext.OrderProducts.Include(x => x.Product).Where(x => x.OrderId == s.Id).ToList()
+                                            }).ToListAsync();
+
+                    orders.ForEach(x => x.InvoiceAddress = GetAddress(x.UserId, token).Result);
+
+                    request = new ExportRequestModel
+                    {
+                        FileName = "Siparişler",
+                        SheetName = "Siparişler",
+                        Title = "Sipariş Listesi",
+
+                        Columns = new List<ExportColumnModel>
+                        {
+                            new() { Key = "Id", Header = "Id", Width = 10, DataType = "number" },
+                            new() { Key = "OrderNo", Header = "Sipariş No", Width = 25, DataType = "text" },
+                            new() { Key = "Price", Header = "Fiyat", Width = 15, DataType = "number", Format = "#,##0.00" },
+                            new() { Key = "OrderDate", Header = "Sipariş Tarihi", Width = 22, DataType = "datetime" },
+                            new() { Key = "OrderStatus", Header = "Durum", Width = 20, DataType = "text" },
+                            new() { Key = "Customer", Header = "Kullanıcı Id", Width = 15, DataType = "number" },
+                            new() { Key = "ProductCount", Header = "Ürün Sayısı", Width = 15, DataType = "number" },
+                            new() { Key = "Products", Header = "Ürünler", Width = 40, DataType = "text" },
+                            new() { Key = "InvoiceAddress", Header = "Adres", Width = 40, DataType = "text" }
+                        },
+                        Rows = orders.Select(x => new Dictionary<string, object?>
+                        {
+                            ["Id"] = x.Id,
+                            ["OrderNo"] = x.OrderNo,
+                            ["Price"] = x.Price,
+                            ["OrderDate"] = x.OrderDate,
+                            ["OrderStatus"] = ((OrderStatus)x.OrderStatus).ToString(),
+                            ["Customer"] = GetUserName(x.UserId, token).Result,
+                            ["ProductCount"] = x.OrderProducts?.Count ?? 0,
+                            ["Products"] = x.OrderProducts != null && x.OrderProducts.Any()
+                                ? string.Join(", ", x.OrderProducts.Select(p => p.Product.Name))
+                                : string.Empty,
+                            ["InvoiceAddress"] = x.InvoiceAddress != null
+                                ? $"{x.InvoiceAddress.Address} / {x.InvoiceAddress.City}"
+                                : string.Empty
+
+                        }).ToList()
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+
+            return request;
+        } 
     }
 }
 

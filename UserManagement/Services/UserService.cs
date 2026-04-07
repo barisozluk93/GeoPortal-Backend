@@ -25,14 +25,21 @@ namespace UserManagement.Services
         private readonly UserManagementContext _dbContext;
 
         private readonly IConfiguration configuration;
+        private readonly IExportGateway _exportGateway;
 
-
-        public UserService(UserManagementContext dbContext, IConfiguration configuration)
+        public UserService(UserManagementContext dbContext, IConfiguration configuration, IExportGateway exportGateway)
         {
             _dbContext = dbContext;
             this.configuration = configuration;
+            _exportGateway = exportGateway;
         }
 
+        public async Task<byte[]> ExportExcel(string token)
+        {
+            var request = await BuildUserExportRequest();
+            return await _exportGateway.ExportExcelAsync(request, token);
+            return null;
+        }
         public async Task<Result<PagingResult<PagedList<User>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameSurnameFilter, string? usernameFilter, string? emailFilter, string? phoneFilter)
         {
             var result = new Result<PagingResult<PagedList<User>>>();
@@ -48,19 +55,19 @@ namespace UserManagement.Services
                                     (!String.IsNullOrEmpty(emailFilter) ? x.Email.ToLower().Contains(emailFilter.ToLower()) : true) &&
                                     (!String.IsNullOrEmpty(phoneFilter) ? x.Phone.ToLower().Contains(phoneFilter.ToLower()) : true))
                         .Select(s => new User()
-                    {
-                        Id = s.Id,
-                        Name = s.Name,
-                        Surname = s.Surname,
-                        Username = s.Username,
-                        IsDeleted = s.IsDeleted,
-                        Email = s.Email,
-                        Phone = s.Phone,
-                        IsSystemData = s.IsSystemData,
-                        Permissions = _dbContext.UserPermissions.Include(p => p.Permission).Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.Permission).ToList(),
-                        Roles = _dbContext.UserRoles.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.RoleId).ToList(),
-                        Organizations = _dbContext.OrganizationUsers.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.OrganizationId).ToList()
-                    });
+                        {
+                            Id = s.Id,
+                            Name = s.Name,
+                            Surname = s.Surname,
+                            Username = s.Username,
+                            IsDeleted = s.IsDeleted,
+                            Email = s.Email,
+                            Phone = s.Phone,
+                            IsSystemData = s.IsSystemData,
+                            Permissions = _dbContext.UserPermissions.Include(p => p.Permission).Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.Permission).ToList(),
+                            Roles = _dbContext.UserRoles.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.RoleId).ToList(),
+                            Organizations = _dbContext.OrganizationUsers.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.OrganizationId).ToList()
+                        });
 
                     var pagination = PagedList<User>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
 
@@ -670,6 +677,71 @@ namespace UserManagement.Services
             return Convert.ToHexString(hash);
         }
 
+        private async Task<ExportRequestModel> BuildUserExportRequest()
+        {
+            ExportRequestModel request = null;
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var users = await _dbContext.Users.Select(s => new User()
+                                        {
+                                            Id = s.Id,
+                                            Name = s.Name,
+                                            Surname = s.Surname,
+                                            Username = s.Username,
+                                            IsDeleted = s.IsDeleted,
+                                            Email = s.Email,
+                                            Phone = s.Phone,
+                                            IsSystemData = s.IsSystemData,
+                                            Roles = _dbContext.UserRoles.Where(x => !x.IsDeleted && x.UserId == s.Id).Select(p => p.RoleId).ToList(),
+                                        }).ToListAsync();
+
+
+                    request = new ExportRequestModel
+                    {
+                        FileName = "Kullanıcılar",
+                        SheetName = "Kullanıcılar",
+                        Title = "Kullanıcı Listesi",
+                        Columns = new List<ExportColumnModel>
+                                    {
+                                        new() { Key = "Id", Header = "Id", Width = 10 , DataType = "number"},
+                                        new() { Key = "Username", Header = "Kullanıcı Adı", Width = 25, DataType = "text" },
+                                        new() { Key = "Name", Header = "Ad", Width = 20, DataType = "text" },
+                                        new() { Key = "Surname", Header = "Soyad", Width = 20, DataType = "text" },
+                                        new() { Key = "FullName", Header = "Ad Soyad", Width = 30, DataType = "text" },
+                                        new() { Key = "Email", Header = "E-Posta", Width = 30, DataType = "text" },
+                                        new() { Key = "Phone", Header = "Telefon", Width = 20, DataType = "text" },
+                                        new() { Key = "Roles", Header = "Rol", Width = 35, DataType = "text" },
+                                        new() { Key = "IsDeleted", Header = "Silindi Mi?", Width = 15, DataType = "boolean" },
+                                        new() { Key = "IsSystemData", Header = "Sistem Verisi Mi?", Width = 18, DataType = "boolean" }
+                                    },
+                                    Rows = users.Select(x => new Dictionary<string, object?>
+                                    {
+                                        ["Id"] = x.Id,
+                                        ["Username"] = x.Username,
+                                        ["Name"] = x.Name,
+                                        ["Surname"] = x.Surname,
+                                        ["FullName"] = $"{x.Name} {x.Surname}".Trim(),
+                                        ["Email"] = x.Email,
+                                        ["Phone"] = x.Phone,
+                                        ["Roles"] = x.Roles != null && x.Roles.Any()
+                                            ? x.Roles.Contains(1) ? "Superadmin" : "Customer"
+                                            : string.Empty,
+                                        ["IsDeleted"] = x.IsDeleted,
+                                        ["IsSystemData"] = x.IsSystemData
+                                    }).ToList()
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+
+            return request;
+        }
         private async Task<FileContentResult> GetFileResult(long id, string token)
         {
             HttpClient client = new HttpClient();

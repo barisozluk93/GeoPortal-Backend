@@ -29,6 +29,10 @@ namespace UserManagement.Entity
         public List<long> Organizations { get; set; } = new List<long>();
 
         [NotMapped]
+
+        public Organization? Organization { get; set; }
+
+        [NotMapped]
         public List<long> Roles { get; set; } = new List<long>();
 
         [NotMapped]

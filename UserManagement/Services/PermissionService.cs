@@ -10,10 +10,17 @@ namespace UserManagement.Services
     public class PermissionService : IPermissionService
     { 
         private readonly UserManagementContext _dbContext;
-
-        public PermissionService(UserManagementContext dbContext)
+        private readonly IExportGateway _exportGateway;
+        public PermissionService(UserManagementContext dbContext, IExportGateway exportGateway)
         {
             _dbContext = dbContext;
+            _exportGateway = exportGateway;
+        }
+
+        public async Task<byte[]> ExportExcel(string token)
+        {
+            var request = await BuildPermissionExportRequest();
+            return await _exportGateway.ExportExcelAsync(request, token);
         }
 
         public async Task<Result<PagingResult<PagedList<Permission>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameFilter, string? codeFilter)
@@ -224,6 +231,48 @@ namespace UserManagement.Services
             }
 
             return result;
+        }
+
+        private async Task<ExportRequestModel> BuildPermissionExportRequest()
+        {
+            ExportRequestModel request = null;
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var permissions = await _dbContext.Permissions.ToListAsync();
+
+                    request = new ExportRequestModel
+                    {
+                        FileName = "Yetkiler",
+                        SheetName = "Yetkiler",
+                        Title = "Yetki Listesi",
+                        Columns = new List<ExportColumnModel>
+                    {
+                        new() { Key = "Id", Header = "Id", Width = 10, DataType = "number" },
+                        new() { Key = "Name", Header = "Ad", Width = 30, DataType = "text" },
+                        new() { Key = "Code", Header = "Kod", Width = 35, DataType = "text" },
+                        new() { Key = "IsDeleted", Header = "Silindi Mi?", Width = 15, DataType = "boolean" },
+                        new() { Key = "IsSystemData", Header = "Sistem Verisi Mi?", Width = 18, DataType = "boolean" }
+                    },
+                        Rows = permissions.Select(x => new Dictionary<string, object?>
+                        {
+                            ["Id"] = x.Id,
+                            ["Name"] = x.Name,
+                            ["Code"] = x.Code,
+                            ["IsDeleted"] = x.IsDeleted,
+                            ["IsSystemData"] = x.IsSystemData
+                        }).ToList()
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+
+            return request;
         }
     }
 }

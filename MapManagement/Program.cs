@@ -25,6 +25,12 @@ builder.Services.AddDbContext<MapManagementContext>(options =>
 
 builder.Services.AddScoped<IMapService, MapService>();
 builder.Services.AddScoped<IApiKeyValidationService, ApiKeyValidationService>();
+
+builder.Services.AddHttpClient<IExportGateway, ExportGateway>(client =>
+{
+    client.BaseAddress = new Uri(Configuration["AppSettings:ApiUrl"]);
+});
+
 builder.Services.AddHttpClient("OrderManagementValidation", client =>
 {
     var baseUrl = Configuration["OrderManagementValidation:BaseUrl"];

@@ -9,7 +9,6 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using OrderManagement.Enums;
 using System.Text;
-using OrderManagement.Handler;
 
 namespace OrderManagement.Services
 {

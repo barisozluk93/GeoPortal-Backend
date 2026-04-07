@@ -25,9 +25,6 @@ var emailConfig = Configuration
         .GetSection("MailSettings")
         .Get<MailSettings>();
 
-Console.WriteLine(emailConfig);
-Console.WriteLine(Configuration.GetConnectionString("DefaultConnection"));
-
 builder.Services.AddSingleton(emailConfig);
 
 builder.Services.AddDbContext<UserManagementContext>(options =>
@@ -36,8 +33,14 @@ builder.Services.AddDbContext<UserManagementContext>(options =>
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<ITokenService, TokenService>();
+
+builder.Services.AddHttpClient<IExportGateway, ExportGateway>(client =>
+{
+    client.BaseAddress = new Uri(Configuration["AppSettings:ApiUrl"]);
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -60,6 +63,13 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();

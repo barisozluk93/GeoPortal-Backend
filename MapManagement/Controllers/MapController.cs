@@ -3,7 +3,9 @@ using MapManagement.Entity;
 using MapManagement.Interfaces;
 using MapManagement.Model;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Utilities;
 
 namespace FileManagement.Controllers
 {
@@ -72,6 +74,20 @@ namespace FileManagement.Controllers
             return new OkObjectResult(result);
         }
 
+        [HttpPost("ExportLayerGroup/Excel")]
+        [Authorize]
+        [HasPermission("Table.Export.Permission")]
+        public async Task<IActionResult> ExportLayerGroupExcel()
+        {
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            var result = await _mapService.ExportLayerGroupExcel(token);
+            return File(
+                result,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"KatmanGrupları{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        }
+
         [HttpGet("GetLayerGroupById/{layerGroupId}")]
         [Authorize]
         [HasPermission("LayerGroupScene.Get.Permission")]
@@ -125,6 +141,20 @@ namespace FileManagement.Controllers
         {
             var result = await _mapService.GetLayerById(layerId);
             return new OkObjectResult(result);
+        }
+
+        [HttpPost("ExportLayer/Excel")]
+        [Authorize]
+        [HasPermission("Table.Export.Permission")]
+        public async Task<IActionResult> ExportLayerExcel()
+        {
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            var result = await _mapService.ExportLayerExcel(token);
+            return File(
+                result,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Katmanlar_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
         }
     }
 }

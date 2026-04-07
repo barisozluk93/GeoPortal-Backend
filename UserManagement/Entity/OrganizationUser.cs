@@ -17,5 +17,6 @@ namespace UserManagement.Entity
         public User User { get; set; }
 
         public bool IsDeleted { get; set; }
+
     }
 }

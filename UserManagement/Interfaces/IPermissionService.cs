@@ -11,6 +11,7 @@ namespace UserManagement.Interfaces
         Task<Result<Permission>> Update(Permission permission);
         Task<Result<Permission>> Delete(long id);
         Task<Result<Permission>> GetById(long id);
+        Task<byte[]> ExportExcel(string token);
 
     }
 }

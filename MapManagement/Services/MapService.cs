@@ -6,6 +6,7 @@ using MapManagement.Model;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 
 namespace MapManagement.Services
 {
@@ -13,9 +14,23 @@ namespace MapManagement.Services
     {
         private readonly MapManagementContext _dbContext;
 
-        public MapService(MapManagementContext dbContext)
+        private readonly IExportGateway _exportGateway;
+        public MapService(MapManagementContext dbContext, IExportGateway exportGateway)
         {
             _dbContext = dbContext;
+            _exportGateway = exportGateway;
+        }
+
+        public async Task<byte[]> ExportLayerGroupExcel(string token)
+        {
+            var request = await BuildRequestLayerGroup();
+            return await _exportGateway.ExportExcelAsync(request, token);
+        }
+
+        public async Task<byte[]> ExportLayerExcel(string token)
+        {
+            var request = await BuildRequestLayer();
+            return await _exportGateway.ExportExcelAsync(request, token);
         }
 
         public async Task<Result<Layer>> DeleteLayer(long layerId)
@@ -462,6 +477,113 @@ namespace MapManagement.Services
 
                 return result;
             }
+        }
+
+
+        private async Task<ExportRequestModel> BuildRequestLayer()
+        {
+            ExportRequestModel request = null;
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var layers = await _dbContext.Layers
+                    .Include(x => x.LayerGroup)
+                    .OrderBy(x => x.OrderNo)
+                    .ToListAsync();
+
+                    request = new ExportRequestModel
+                    {
+                        FileName = "Katmanlar",
+                        SheetName = "Katmanlar",
+                        Title = "Katman Listesi",
+                        Columns = new List<ExportColumnModel>
+                        {
+                            new() { Key = "Id", Header = "Id", Width = 10, DataType = "number" },
+                            new() { Key = "Name", Header = "Ad", Width = 25, DataType = "text" },
+                            new() { Key = "Type", Header = "Tip", Width = 15, DataType = "text" },
+                            new() { Key = "Url", Header = "Url", Width = 40, DataType = "text" },
+                            new() { Key = "LayerName", Header = "Katman Adı", Width = 25, DataType = "text" },
+                            new() { Key = "Format", Header = "Format", Width = 15, DataType = "text" },
+                            new() { Key = "Version", Header = "Versiyon", Width = 15, DataType = "text" },
+                            new() { Key = "IsVisible", Header = "Görünür Mü?", Width = 12, DataType = "boolean"  },
+                            new() { Key = "Opacity", Header = "Opaklık", Width = 12, Format = "0.00", DataType = "number" },
+                            new() { Key = "OrderNo", Header = "Sıra Numarası", Width = 12, DataType = "number" },
+                            new() { Key = "CreatedAt", Header = "Oluşturulma Tarihi", Width = 22, DataType = "text" },
+                            new() { Key = "LayerGroup", Header = "Ait Olduğu Katman Grubu", Width = 25, DataType = "text" },
+                            new() { Key = "IsDeleted", Header = "Silindi Mi?", Width = 12, DataType = "boolean" }
+                        }
+                    };
+
+                    request.Rows = layers.Select(x => new Dictionary<string, object?>
+                    {
+                        ["Id"] = x.Id,
+                        ["Name"] = x.Name,
+                        ["Type"] = x.Type.ToString(),
+                        ["Url"] = x.Url,
+                        ["LayerName"] = x.LayerName,
+                        ["Format"] = x.Format,
+                        ["Version"] = x.Version,
+                        ["IsVisible"] = x.IsVisible,
+                        ["Opacity"] = x.Opacity,
+                        ["OrderNo"] = x.OrderNo,
+                        ["CreatedAt"] = x.CreatedAt,
+                        ["LayerGroup"] = x.LayerGroup != null ? x.LayerGroup.Name : string.Empty,
+                        ["IsDeleted"] = x.IsDeleted
+                    }).ToList();
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+
+            }
+            return request;
+        }
+
+        private async Task<ExportRequestModel> BuildRequestLayerGroup()
+        {
+            ExportRequestModel request = null;
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var layerGroups = await _dbContext.LayerGroups
+                    .Include(x => x.Layers)
+                    .OrderBy(x => x.OrderNo)
+                    .ToListAsync();
+
+                    request = new ExportRequestModel
+                    {
+                        FileName = "Katman_Grupları",
+                        SheetName = "KatmanGrupları",
+                        Title = "Katman Grubu Listesi",
+                        Columns = new List<ExportColumnModel>
+                        {
+                            new() { Key = "Id", Header = "Id", Width = 10, DataType = "number" },
+                            new() { Key = "Name", Header = "Ad", Width = 25, DataType = "text" },
+                            new() { Key = "OrderNo", Header = "Sıra No", Width = 15 , DataType = "number"},
+                            new() { Key = "IsDeleted", Header = "Silindi Mi?", Width = 15, DataType = "boolean" },
+                        }
+                    };
+
+                    request.Rows = layerGroups.Select(x => new Dictionary<string, object?>
+                    {
+                        ["Id"] = x.Id,
+                        ["Name"] = x.Name,
+                        ["OrderNo"] = x.OrderNo,
+                        ["IsDeleted"] = x.IsDeleted,
+                    }).ToList();
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+
+            return request;
         }
     }
 }

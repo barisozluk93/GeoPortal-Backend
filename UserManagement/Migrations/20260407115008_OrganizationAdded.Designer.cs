@@ -12,8 +12,8 @@ using UserManagement.DbContexts;
 namespace UserManagement.Migrations
 {
     [DbContext(typeof(UserManagementContext))]
-    [Migration("20260405153247_Initial")]
-    partial class Initial
+    [Migration("20260407115008_OrganizationAdded")]
+    partial class OrganizationAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,6 +67,14 @@ namespace UserManagement.Migrations
 
                     b.Property<long?>("ParentId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("TaxNo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaxOffice")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -599,6 +607,54 @@ namespace UserManagement.Migrations
                             IsDeleted = false,
                             IsSystemData = true,
                             Name = "Destek Ekranı Cevaplama Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 60L,
+                            Code = "Table.Export.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Tablo Dışa Aktarma Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 61L,
+                            Code = "OrganizationScene.Paging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Organizasyon Ekranı Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 62L,
+                            Code = "OrganizationScene.Save.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Organizasyon Ekranı Kayıt Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 63L,
+                            Code = "OrganizationScene.Edit.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Organizasyon Ekranı Güncelleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 64L,
+                            Code = "OrganizationScene.Delete.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Organizasyon Ekranı Silme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 65L,
+                            Code = "OrganizationScene.Get.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Organizasyon Ekranı Görüntüleme Yetkisi"
                         });
                 });
 
@@ -1077,8 +1133,43 @@ namespace UserManagement.Migrations
                         {
                             Id = 59L,
                             IsDeleted = false,
-                            PermissionId = 18L,
-                            RoleId = 2L
+                            PermissionId = 60L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 83L,
+                            IsDeleted = false,
+                            PermissionId = 61L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 84L,
+                            IsDeleted = false,
+                            PermissionId = 62L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 85L,
+                            IsDeleted = false,
+                            PermissionId = 63L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 86L,
+                            IsDeleted = false,
+                            PermissionId = 64L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 87L,
+                            IsDeleted = false,
+                            PermissionId = 65L,
+                            RoleId = 1L
                         },
                         new
                         {
@@ -1232,6 +1323,13 @@ namespace UserManagement.Migrations
                             Id = 81L,
                             IsDeleted = false,
                             PermissionId = 55L,
+                            RoleId = 2L
+                        },
+                        new
+                        {
+                            Id = 82L,
+                            IsDeleted = false,
+                            PermissionId = 18L,
                             RoleId = 2L
                         });
                 });
@@ -1814,8 +1912,43 @@ namespace UserManagement.Migrations
                         {
                             Id = 59L,
                             IsDeleted = false,
-                            PermissionId = 18L,
-                            UserId = 2L
+                            PermissionId = 60L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 83L,
+                            IsDeleted = false,
+                            PermissionId = 61L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 84L,
+                            IsDeleted = false,
+                            PermissionId = 62L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 85L,
+                            IsDeleted = false,
+                            PermissionId = 63L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 86L,
+                            IsDeleted = false,
+                            PermissionId = 64L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 87L,
+                            IsDeleted = false,
+                            PermissionId = 65L,
+                            UserId = 1L
                         },
                         new
                         {
@@ -1969,6 +2102,13 @@ namespace UserManagement.Migrations
                             Id = 81L,
                             IsDeleted = false,
                             PermissionId = 55L,
+                            UserId = 2L
+                        },
+                        new
+                        {
+                            Id = 82L,
+                            IsDeleted = false,
+                            PermissionId = 18L,
                             UserId = 2L
                         });
                 });

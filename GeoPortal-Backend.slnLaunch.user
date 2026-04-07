@@ -36,6 +36,11 @@
         "Path": "SupportManagement\\SupportManagement.csproj",
         "Action": "Start",
         "DebugTarget": "http"
+      },
+      {
+        "Path": "FileExporter\\FileExporter.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
       }
     ]
   }

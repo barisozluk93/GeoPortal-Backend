@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapManagement", "MapManagem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupportManagement", "SupportManagement\SupportManagement.csproj", "{6D466642-956C-45AF-BDC9-F7FD0EA0294A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileExporter", "FileExporter\FileExporter.csproj", "{8E276398-7829-437C-96F2-A32E03FA6197}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{6D466642-956C-45AF-BDC9-F7FD0EA0294A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D466642-956C-45AF-BDC9-F7FD0EA0294A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D466642-956C-45AF-BDC9-F7FD0EA0294A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E276398-7829-437C-96F2-A32E03FA6197}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E276398-7829-437C-96F2-A32E03FA6197}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E276398-7829-437C-96F2-A32E03FA6197}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E276398-7829-437C-96F2-A32E03FA6197}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -16,6 +16,7 @@ namespace OrderManagement.Interfaces
         Task<Result<OrderProduct>> AddInvoice(OrderProduct orderProduct, string token);
         Task<Result<OrderProduct>> DeleteInvoice(long id, string token);
         Task<Result<ValidateApiKeyResponse>> ValidateApiKey(ValidateApiKeyRequest request);
+        Task<byte[]> ExportExcel(string token);
 
 
     }

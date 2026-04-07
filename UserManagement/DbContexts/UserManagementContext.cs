@@ -92,7 +92,16 @@ namespace UserManagement.DbContexts
                 new Permission { Id = 56, Name = "Destek Ekranı Sayfalama Yetkisi", Code = "SupportScene.Paging.Permission", IsDeleted = false, IsSystemData = true },
                 new Permission { Id = 57, Name = "Destek Ekranı Görüntüleme Yetkisi", Code = "SupportScene.Get.Permission", IsDeleted = false, IsSystemData = true },
                 new Permission { Id = 58, Name = "Destek Ekranı Durum Güncelleme Yetkisi", Code = "SupportScene.Edit.Permission", IsDeleted = false, IsSystemData = true },
-                new Permission { Id = 59, Name = "Destek Ekranı Cevaplama Yetkisi", Code = "SupportScene.Reply.Permission", IsDeleted = false, IsSystemData = true }
+                new Permission { Id = 59, Name = "Destek Ekranı Cevaplama Yetkisi", Code = "SupportScene.Reply.Permission", IsDeleted = false, IsSystemData = true },
+                //Export
+                new Permission { Id = 60, Name = "Tablo Dışa Aktarma Yetkisi", Code = "Table.Export.Permission", IsDeleted = false, IsSystemData = true },
+                //Organization
+                new Permission { Id = 61, Name = "Organizasyon Ekranı Listeleme Yetkisi", Code = "OrganizationScene.Paging.Permission", IsDeleted = false, IsSystemData = true },
+                new Permission { Id = 62, Name = "Organizasyon Ekranı Kayıt Yetkisi", Code = "OrganizationScene.Save.Permission", IsDeleted = false, IsSystemData = true },
+                new Permission { Id = 63, Name = "Organizasyon Ekranı Güncelleme Yetkisi", Code = "OrganizationScene.Edit.Permission", IsDeleted = false, IsSystemData = true },
+                new Permission { Id = 64, Name = "Organizasyon Ekranı Silme Yetkisi", Code = "OrganizationScene.Delete.Permission", IsDeleted = false, IsSystemData = true },
+                new Permission { Id = 65, Name = "Organizasyon Ekranı Görüntüleme Yetkisi", Code = "OrganizationScene.Get.Permission", IsDeleted = false, IsSystemData = true },
+                new Permission { Id = 66, Name = "Yetki Ekranı Listeleme Yetkisi", Code = "OrganizationScene.All.Permission", IsDeleted = false, IsSystemData = true }
             );
 
 
@@ -161,8 +170,14 @@ namespace UserManagement.DbContexts
                 new RolePermission { Id = 56, RoleId = 1, PermissionId = 57, IsDeleted = false },
                 new RolePermission { Id = 57, RoleId = 1, PermissionId = 58, IsDeleted = false },
                 new RolePermission { Id = 58, RoleId = 1, PermissionId = 59, IsDeleted = false },
+                new RolePermission { Id = 59, RoleId = 1, PermissionId = 60, IsDeleted = false },
+                new RolePermission { Id = 83, RoleId = 1, PermissionId = 61, IsDeleted = false },
+                new RolePermission { Id = 84, RoleId = 1, PermissionId = 62, IsDeleted = false },
+                new RolePermission { Id = 85, RoleId = 1, PermissionId = 63, IsDeleted = false },
+                new RolePermission { Id = 86, RoleId = 1, PermissionId = 64, IsDeleted = false },
+                new RolePermission { Id = 87, RoleId = 1, PermissionId = 65, IsDeleted = false },
+                new RolePermission { Id = 88, RoleId = 1, PermissionId = 66, IsDeleted = false },
                 //Customer Role Perms
-                new RolePermission { Id = 59, RoleId = 2, PermissionId = 18, IsDeleted = false },
                 new RolePermission { Id = 60, RoleId = 2, PermissionId = 19, IsDeleted = false },
                 new RolePermission { Id = 61, RoleId = 2, PermissionId = 20, IsDeleted = false },
                 new RolePermission { Id = 62, RoleId = 2, PermissionId = 21, IsDeleted = false },
@@ -184,7 +199,8 @@ namespace UserManagement.DbContexts
                 new RolePermission { Id = 78, RoleId = 2, PermissionId = 42, IsDeleted = false },
                 new RolePermission { Id = 79, RoleId = 2, PermissionId = 43, IsDeleted = false },
                 new RolePermission { Id = 80, RoleId = 2, PermissionId = 17, IsDeleted = false },
-                new RolePermission { Id = 81, RoleId = 2, PermissionId = 55, IsDeleted = false }
+                new RolePermission { Id = 81, RoleId = 2, PermissionId = 55, IsDeleted = false },
+                new RolePermission { Id = 82, RoleId = 2, PermissionId = 18, IsDeleted = false }
             );
 
             modelBuilder.Entity<User>().HasData(
@@ -285,8 +301,14 @@ namespace UserManagement.DbContexts
                 new UserPermission { Id = 56, UserId = 1, PermissionId = 57, IsDeleted = false },
                 new UserPermission { Id = 57, UserId = 1, PermissionId = 58, IsDeleted = false },
                 new UserPermission { Id = 58, UserId = 1, PermissionId = 59, IsDeleted = false },
+                new UserPermission { Id = 59, UserId = 1, PermissionId = 60, IsDeleted = false },
+                new UserPermission { Id = 83, UserId = 1, PermissionId = 61, IsDeleted = false },
+                new UserPermission { Id = 84, UserId = 1, PermissionId = 62, IsDeleted = false },
+                new UserPermission { Id = 85, UserId = 1, PermissionId = 63, IsDeleted = false },
+                new UserPermission { Id = 86, UserId = 1, PermissionId = 64, IsDeleted = false },
+                new UserPermission { Id = 87, UserId = 1, PermissionId = 65, IsDeleted = false },
+                new UserPermission { Id = 88, UserId = 1, PermissionId = 66, IsDeleted = false },
                 //Customer User Permissions
-                new UserPermission { Id = 59, UserId = 2, PermissionId = 18, IsDeleted = false },
                 new UserPermission { Id = 60, UserId = 2, PermissionId = 19, IsDeleted = false },
                 new UserPermission { Id = 61, UserId = 2, PermissionId = 20, IsDeleted = false },
                 new UserPermission { Id = 62, UserId = 2, PermissionId = 21, IsDeleted = false },
@@ -308,7 +330,8 @@ namespace UserManagement.DbContexts
                 new UserPermission { Id = 78, UserId = 2, PermissionId = 42, IsDeleted = false },
                 new UserPermission { Id = 79, UserId = 2, PermissionId = 43, IsDeleted = false },
                 new UserPermission { Id = 80, UserId = 2, PermissionId = 17, IsDeleted = false },
-                new UserPermission { Id = 81, UserId = 2, PermissionId = 55, IsDeleted = false }
+                new UserPermission { Id = 81, UserId = 2, PermissionId = 55, IsDeleted = false },
+                new UserPermission { Id = 82, UserId = 2, PermissionId = 18, IsDeleted = false }
 
             );
         }

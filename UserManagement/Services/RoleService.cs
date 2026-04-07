@@ -10,10 +10,17 @@ namespace UserManagement.Services
     public class RoleService : IRoleService
     {
         private readonly UserManagementContext _dbContext;
-
-        public RoleService(UserManagementContext dbContext)
+        private readonly IExportGateway _exportGateway;
+        public RoleService(UserManagementContext dbContext, IExportGateway exportGateway)
         {
             _dbContext = dbContext;
+            _exportGateway = exportGateway;
+        }
+
+        public async Task<byte[]> ExportExcel(string token)
+        {
+            var request = await BuildRoleExportRequest();
+            return await _exportGateway.ExportExcelAsync(request, token);
         }
 
         public async Task<Result<PagingResult<PagedList<Role>>>> Paginate(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameFilter)
@@ -280,6 +287,57 @@ namespace UserManagement.Services
             }
 
             return result;
+        }
+
+        private async Task<ExportRequestModel> BuildRoleExportRequest()
+        {
+            ExportRequestModel request = null;
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var roles = await _dbContext.Roles
+                        .Select(s => new Role()
+                        {
+                            Id = s.Id,
+                            Name = s.Name,
+                            IsDeleted = s.IsDeleted,
+                            IsSystemData = s.IsSystemData,
+                            PermissionNames = _dbContext.RolePermissions.Include(x => x.Permission).Where(x => !x.IsDeleted && x.RoleId == s.Id).Select(p => p.Permission.Name).ToList()
+                        }).ToListAsync();
+
+
+                    request = new ExportRequestModel
+                    {
+                        FileName = "Roller",
+                        SheetName = "Roller",
+                        Title = "Rol Listesi",
+                        Columns = new List<ExportColumnModel>
+                    {
+                        new() { Key = "Id", Header = "Id", Width = 10, DataType = "number" },
+                        new() { Key = "Name", Header = "Ad", Width = 30, DataType = "text" },
+                        new() { Key = "PermissionNames", Header = "Yetkiler", Width = 35, DataType = "text" },
+                        new() { Key = "IsDeleted", Header = "Silindi Mi?", Width = 15, DataType = "boolean" },
+                        new() { Key = "IsSystemData", Header = "Sistem Verisi Mi?", Width = 18, DataType = "boolean" }
+                    },
+                        Rows = roles.Select(x => new Dictionary<string, object?>
+                        {
+                            ["Id"] = x.Id,
+                            ["Name"] = x.Name,
+                            ["PermissionNames"] = x.PermissionNames != null && x.PermissionNames.Any() ? string.Join(", ", x.PermissionNames) : string.Empty,
+                            ["IsDeleted"] = x.IsDeleted,
+                            ["IsSystemData"] = x.IsSystemData
+                        }).ToList()
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+
+            return request;
         }
     }
 }

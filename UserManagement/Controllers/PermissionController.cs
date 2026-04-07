@@ -74,5 +74,19 @@ namespace UserManagement.Controllers
             var result = await _permissionService.GetById(id);
             return new OkObjectResult(result);
         }
+
+        [HttpPost("Export/Excel")]
+        [Authorize]
+        [HasPermission("Table.Export.Permission")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            var result = await _permissionService.ExportExcel(token);
+            return File(
+                result,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Yetkiler{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+        }
     }
 }

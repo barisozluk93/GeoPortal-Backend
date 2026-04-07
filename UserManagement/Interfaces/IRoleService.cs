@@ -11,6 +11,8 @@ namespace UserManagement.Interfaces
         Task<Result<Role>> Update(Role role);
         Task<Result<Role>> Delete(long id);
         Task<Result<Role>> GetById(long id);
+        Task<byte[]> ExportExcel(string token);
+
 
     }
 }

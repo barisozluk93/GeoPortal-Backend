@@ -311,7 +311,8 @@ namespace UserManagement.Migrations
                     { 56L, "SupportScene.Paging.Permission", false, true, "Destek Ekranı Sayfalama Yetkisi" },
                     { 57L, "SupportScene.Get.Permission", false, true, "Destek Ekranı Görüntüleme Yetkisi" },
                     { 58L, "SupportScene.Edit.Permission", false, true, "Destek Ekranı Durum Güncelleme Yetkisi" },
-                    { 59L, "SupportScene.Reply.Permission", false, true, "Destek Ekranı Cevaplama Yetkisi" }
+                    { 59L, "SupportScene.Reply.Permission", false, true, "Destek Ekranı Cevaplama Yetkisi" },
+                    { 60L, "Table.Export.Permission", false, true, "Tablo Dışa Aktarma Yetkisi" }
                 });
 
             migrationBuilder.InsertData(
@@ -395,7 +396,7 @@ namespace UserManagement.Migrations
                     { 56L, false, 57L, 1L },
                     { 57L, false, 58L, 1L },
                     { 58L, false, 59L, 1L },
-                    { 59L, false, 18L, 2L },
+                    { 59L, false, 60L, 1L },
                     { 60L, false, 19L, 2L },
                     { 61L, false, 20L, 2L },
                     { 62L, false, 21L, 2L },
@@ -417,7 +418,8 @@ namespace UserManagement.Migrations
                     { 78L, false, 42L, 2L },
                     { 79L, false, 43L, 2L },
                     { 80L, false, 17L, 2L },
-                    { 81L, false, 55L, 2L }
+                    { 81L, false, 55L, 2L },
+                    { 82L, false, 18L, 2L }
                 });
 
             migrationBuilder.InsertData(
@@ -483,7 +485,7 @@ namespace UserManagement.Migrations
                     { 56L, false, 57L, 1L },
                     { 57L, false, 58L, 1L },
                     { 58L, false, 59L, 1L },
-                    { 59L, false, 18L, 2L },
+                    { 59L, false, 60L, 1L },
                     { 60L, false, 19L, 2L },
                     { 61L, false, 20L, 2L },
                     { 62L, false, 21L, 2L },
@@ -505,7 +507,8 @@ namespace UserManagement.Migrations
                     { 78L, false, 42L, 2L },
                     { 79L, false, 43L, 2L },
                     { 80L, false, 17L, 2L },
-                    { 81L, false, 55L, 2L }
+                    { 81L, false, 55L, 2L },
+                    { 82L, false, 18L, 2L }
                 });
 
             migrationBuilder.InsertData(

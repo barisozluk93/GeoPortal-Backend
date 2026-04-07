@@ -4,6 +4,7 @@ using UserManagement.Authorization;
 using UserManagement.Entity;
 using UserManagement.Interfaces;
 using UserManagement.Model;
+using UserManagement.Services;
 
 namespace UserManagement.Controllers
 {
@@ -151,6 +152,20 @@ namespace UserManagement.Controllers
         {
             var result = await _userService.GetUserAddressById(id);
             return new OkObjectResult(result);
+        }
+
+        [HttpPost("Export/Excel")]
+        [Authorize]
+        [HasPermission("Table.Export.Permission")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+
+            var result = await _userService.ExportExcel(token);
+            return File(
+                result,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Kullanıcılar{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
         }
     }
 }

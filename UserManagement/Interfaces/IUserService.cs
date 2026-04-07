@@ -20,7 +20,6 @@ namespace UserManagement.Interfaces
         Task<Result<UserAddress>> UserAddressUpdate(UserAddress user);
         Task<Result<UserAddress>> UserAddressDelete(long id);
         Task<Result<UserAddress>> GetUserAddressById(long id);
-
-
+        Task<byte[]> ExportExcel(string token);
     }
 }
