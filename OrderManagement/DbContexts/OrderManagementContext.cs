@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OrderManagement.Entity;
+using System;
 
 
 namespace OrderManagement.DbContexts
@@ -11,6 +12,20 @@ namespace OrderManagement.DbContexts
         {
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+
+            var configuration = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory()) // önemli
+               .AddJsonFile("appsettings.json")
+               .Build();
+
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            var optionsBuilder = new DbContextOptionsBuilder<OrderManagementContext>();
+
+            optionsBuilder.UseNpgsql(
+                connectionString,
+                x => x.UseNetTopologySuite()
+            );
         }
 
         public DbSet<Product> Products { get; set; }
@@ -26,26 +41,11 @@ namespace OrderManagement.DbContexts
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasPostgresExtension("postgis");
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderManagementContext).Assembly);
+
             modelBuilder.Entity<Product>(entity =>
             {
-                entity.ToTable("Products");
-
-                entity.HasKey(x => x.Id);
-
-                entity.Property(x => x.Name).HasMaxLength(500);
-                entity.Property(x => x.DownloadLink).HasMaxLength(1000);
-                entity.Property(x => x.Price).HasColumnType("decimal(18,2)");
-                entity.Property(x => x.PriceStr).HasMaxLength(50);
-                entity.Property(x => x.City).HasMaxLength(150);
-                entity.Property(x => x.District).HasMaxLength(150);
-                entity.Property(x => x.Provider).HasMaxLength(150);
-                entity.Property(x => x.Resolution).HasColumnType("decimal(18,2)");
-                entity.Property(x => x.AreaKm2).HasColumnType("decimal(18,2)");
-                entity.Property(x => x.Currency).HasMaxLength(10);
-                entity.Property(x => x.ThumbnailUrl).HasMaxLength(1000);
-                entity.Property(x => x.PreviewUrl).HasMaxLength(1000);
-                entity.Property(x => x.Description).HasMaxLength(4000);
-
                 entity.HasData(
                     new Product
                     {
@@ -55,7 +55,8 @@ namespace OrderManagement.DbContexts
                         PriceStr = "₺1000",
                         IsDeleted = false,
                         CategoryId = 2,
-                        Currency = "TRY"
+                        Currency = "TRY",
+                        IsInMarket = true,
                     },
                     new Product
                     {
@@ -79,7 +80,8 @@ namespace OrderManagement.DbContexts
                         Description = "Yüksek çözünürlüklü şehir uydu görüntüsü.",
                         IsOrthorectified = true,
                         IsPansharpened = true,
-                        IsClassified = true
+                        IsClassified = true,
+                        IsInMarket = true
                     },
                     new Product
                     {
@@ -89,7 +91,7 @@ namespace OrderManagement.DbContexts
                         Price = 12400,
                         PriceStr = "₺12.400",
                         IsDeleted = false,
-                        CategoryId = 2,
+                        CategoryId = 1,
                         City = "Ankara",
                         District = "Gölbaşı",
                         AcquisitionDate = new DateTime(2026, 2, 28, 9, 40, 0),
@@ -103,7 +105,8 @@ namespace OrderManagement.DbContexts
                         Description = "Tarım alanları için analiz verisi.",
                         IsOrthorectified = true,
                         IsPansharpened = false,
-                        IsClassified = true
+                        IsClassified = true,
+                        IsInMarket = true
                     },
                     new Product
                     {
@@ -113,7 +116,7 @@ namespace OrderManagement.DbContexts
                         Price = 21800,
                         PriceStr = "₺21.800",
                         IsDeleted = false,
-                        CategoryId = 3,
+                        CategoryId = 1,
                         City = "İzmir",
                         District = "Karşıyaka",
                         AcquisitionDate = new DateTime(2026, 3, 5, 14, 20, 0),
@@ -127,7 +130,8 @@ namespace OrderManagement.DbContexts
                         Description = "Kıyı ve şehir birleşik uydu görüntüsü.",
                         IsOrthorectified = true,
                         IsPansharpened = true,
-                        IsClassified = false
+                        IsClassified = false,
+                        IsInMarket = true,
                     },
                     new Product
                     {
@@ -137,7 +141,7 @@ namespace OrderManagement.DbContexts
                         Price = 16750,
                         PriceStr = "₺16.750",
                         IsDeleted = false,
-                        CategoryId = 4,
+                        CategoryId = 1,
                         City = "Bursa",
                         District = "Nilüfer",
                         AcquisitionDate = new DateTime(2026, 1, 19, 11, 10, 0),
@@ -151,7 +155,8 @@ namespace OrderManagement.DbContexts
                         Description = "Sanayi alanı analiz görüntüsü.",
                         IsOrthorectified = true,
                         IsPansharpened = true,
-                        IsClassified = true
+                        IsClassified = true,
+                        IsInMarket = true,
                     },
                     new Product
                     {
@@ -161,7 +166,7 @@ namespace OrderManagement.DbContexts
                         Price = 14300,
                         PriceStr = "₺14.300",
                         IsDeleted = false,
-                        CategoryId = 5,
+                        CategoryId = 1,
                         City = "Antalya",
                         District = "Alanya",
                         AcquisitionDate = new DateTime(2026, 3, 18, 8, 30, 0),
@@ -175,7 +180,8 @@ namespace OrderManagement.DbContexts
                         Description = "Turizm ve kıyı analiz verisi.",
                         IsOrthorectified = true,
                         IsPansharpened = false,
-                        IsClassified = true
+                        IsClassified = true,
+                        IsInMarket = true
                     },
                     new Product
                     {
@@ -185,7 +191,7 @@ namespace OrderManagement.DbContexts
                         Price = 9800,
                         PriceStr = "₺9.800",
                         IsDeleted = false,
-                        CategoryId = 2,
+                        CategoryId = 1,
                         City = "Konya",
                         District = "Selçuklu",
                         AcquisitionDate = new DateTime(2026, 2, 11, 16, 45, 0),
@@ -199,7 +205,8 @@ namespace OrderManagement.DbContexts
                         Description = "Geniş tarım alanı gözlemi.",
                         IsOrthorectified = true,
                         IsPansharpened = false,
-                        IsClassified = true
+                        IsClassified = true,
+                        IsInMarket = true
                     }
                 );
             });

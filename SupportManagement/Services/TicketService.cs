@@ -13,14 +13,21 @@ public class TicketService : ITicketService
 {
     private readonly SupportManagementDbContext _dbContext;
     private readonly IEmailSender _emailSender;
-
-    public TicketService(SupportManagementDbContext dbContext, IEmailSender emailSender)
+    private readonly IExportGateway _exportGateway;
+    public TicketService(SupportManagementDbContext dbContext, IEmailSender emailSender, IExportGateway exportGateway)
     {
         _dbContext = dbContext;
         _emailSender = emailSender;
+        _exportGateway = exportGateway;
     }
 
-        public async Task<Result<PagingResult<PagedList<Ticket>>>> Paginate(PagingParameter pagingParameter, string? ticketNoFiler, string? customerFilter, string? emailFilter, string? subjectFilter, string? statusFilter, string? lastMesageDateFromFilter, string? lastMesageDateToFilter)
+    public async Task<byte[]> ExportExcel(string token)
+    {
+        var request = await BuildExportRequest(token);
+        return await _exportGateway.ExportExcelAsync(request, token);
+    }
+
+    public async Task<Result<PagingResult<PagedList<Ticket>>>> Paginate(PagingParameter pagingParameter, string? ticketNoFiler, string? customerFilter, string? emailFilter, string? subjectFilter, string? statusFilter, string? lastMesageDateFromFilter, string? lastMesageDateToFilter)
         {
             var result = new Result<PagingResult<PagedList<Ticket>>>();
             
@@ -242,5 +249,70 @@ public class TicketService : ITicketService
                 Regards,
                 Support Team
                 """;
+    }
+
+    private async Task<ExportRequestModel> BuildExportRequest(string token)
+    {
+        ExportRequestModel request = null;
+
+        using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+        {
+            try
+            {
+                var orders = await _dbContext.Tickets
+                                        .Include(x => x.Messages)
+                                        .Select(s => new Ticket
+                                        {
+                                            Id = s.Id,
+                                            TicketNo = s.TicketNo,
+                                            Status = s.Status,
+                                            Organization = s.Organization,
+                                            CustomerName = s.CustomerName,
+                                            CustomerEmail = s.CustomerEmail,
+                                            CreatedAtUtc = s.CreatedAtUtc,
+                                            AssignedAdminEmail = s.AssignedAdminEmail,
+                                            Messages = s.Messages
+                                        }).ToListAsync();
+
+
+                request = new ExportRequestModel
+                {
+                    FileName = "Destek Talepleri",
+                    SheetName = "Destek Talepleri",
+                    Title = "Destek Talepleri Listesi",
+
+                    Columns = new List<ExportColumnModel>
+                        {
+                            new() { Key = "Id", Header = "Id", Width = 10, DataType = "number" },
+                            new() { Key = "TicketNo", Header = "Ticket No", Width = 25, DataType = "text" },
+                            new() { Key = "CustomerName", Header = "Ad Soyad", Width = 15, DataType = "text" },
+                            new() { Key = "Organization", Header = "Organizasyon", Width = 22, DataType = "text" },
+                            new() { Key = "CustomerEmail", Header = "E-posta", Width = 22, DataType = "text" },
+                            new() { Key = "Status", Header = "Durum", Width = 20, DataType = "text" },
+                            new() { Key = "CreatedAtUtc", Header = "Oluþturulma Tarihi", Width = 15, DataType = "datetime" },
+                            new() { Key = "AssignedAdminEmail", Header = "Admin E-posta", Width = 22, DataType = "text" },
+                            new() { Key = "MessageCount", Header = "Mesaj Sayýsý", Width = 40, DataType = "text" }
+                        },
+                    Rows = orders.Select(x => new Dictionary<string, object?>
+                    {
+                        ["Id"] = x.Id,
+                        ["TicketNo"] = x.TicketNo,
+                        ["CustomerName"] = x.CustomerName,
+                        ["Organization"] = x.Organization,
+                        ["CustomerEmail"] = x.CustomerEmail,
+                        ["AssignedAdminEmail"] = x.AssignedAdminEmail,
+                        ["Status"] = x.Status,
+                        ["CreatedAtUtc"] = x.CreatedAtUtc,
+                        ["MessageCount"] = x.Messages?.Count ?? 0
+                    }).ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        return request;
     }
 }

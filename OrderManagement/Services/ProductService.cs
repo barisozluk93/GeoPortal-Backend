@@ -38,7 +38,7 @@ namespace OrderManagement.Services
                 {
                     var queryable = _dbContext.Products
                                 .Where(x =>
-                                    x.Id > 1 &&
+                                    (x.CategoryId == (int)ProductCategory.Market || x.CategoryId == (int)ProductCategory.CustomArea) && x.IsInMarket && 
                                     (pagingParameter.MaxCloudRate <= -1 ||
                                      (x.CloudRate.HasValue && x.CloudRate.Value <= pagingParameter.MaxCloudRate.Value)) &&
                                     (pagingParameter.MaxPrice <= -1 ||

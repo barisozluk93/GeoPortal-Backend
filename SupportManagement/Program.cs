@@ -32,8 +32,12 @@ builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IEmailProcessor, EmailProcessor>();
-
 builder.Services.AddHostedService<MailListenerService>();
+
+builder.Services.AddHttpClient<IExportGateway, ExportGateway>(client =>
+{
+    client.BaseAddress = new Uri(Configuration["AppSettings:ApiUrl"]);
+});
 
 builder.Services.AddAuthentication(options =>
 {

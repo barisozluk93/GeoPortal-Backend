@@ -6,6 +6,7 @@ namespace MapManagement.Interfaces
     public interface IMapService
     {
         Task<Result<List<LayerGroup>>> ListLayerGroup();
+        Task<Result<List<LayerGroup>>> GetLayerGroups();
         Task<Result<PagingResult<PagedList<LayerGroup>>>> PaginateLayerGroup(PagingParameter pagingParameter, bool? isDeletedFilter, string? nameFilter, long? orderNoFilter);
         Task<Result<LayerGroup>> SaveLayerGroup(LayerGroup layerGroup);
         Task<Result<LayerGroup>> EditLayerGroup(LayerGroup layerGroup);

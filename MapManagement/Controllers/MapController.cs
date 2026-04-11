@@ -33,7 +33,7 @@ namespace FileManagement.Controllers
         [HasPermission("LayerGroupScene.All.Permission")]
         public async Task<IActionResult> GetLayerGroups()
         {
-            var result = await _mapService.ListLayerGroup();
+            var result = await _mapService.GetLayerGroups();
             return new OkObjectResult(result);
         }
 

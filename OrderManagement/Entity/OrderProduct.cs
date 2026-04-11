@@ -18,14 +18,7 @@ namespace OrderManagement.Entity
         public long OrderId { get; set; }
         public int OrderStatus { get; set; }
         public DateTime? ProccessDate { get; set; }
-        public long? FileId { get; set; }
         public DateTime? CompletionDate { get; set; }
-
-        [NotMapped]
-        public FileContentResult? FileResult { get; set; }
-
-        [NotMapped]
-        public string? FileName { get; set; }
 
     }
 }

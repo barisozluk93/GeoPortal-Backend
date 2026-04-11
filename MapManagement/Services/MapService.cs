@@ -288,6 +288,36 @@ namespace MapManagement.Services
                 {
                     var groups = await _dbContext.LayerGroups
                         .Include(x => x.Layers.Where(x => !x.IsDeleted).OrderBy(o => o.OrderNo))
+                        .Where(x => !x.IsDeleted && x.Layers.Count() > 0)
+                        .OrderBy(o => o.OrderNo)
+                        .ToListAsync();
+
+                    result.SetData(groups);
+                    result.SetMessage("İşlem başarı ile gerçekleşti.");
+                }
+                catch (Exception ex)
+                {
+                    {
+                        transaction.Rollback();
+
+                        result.SetIsSuccess(false);
+                        result.SetMessage(ex.Message);
+                    }
+                }
+
+                return result;
+            }
+        }
+        public async Task<Result<List<LayerGroup>>> GetLayerGroups()
+        {
+            var result = new Result<List<LayerGroup>>();
+
+            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                try
+                {
+                    var groups = await _dbContext.LayerGroups
+                        .Include(x => x.Layers.Where(x => !x.IsDeleted).OrderBy(o => o.OrderNo))
                         .Where(x => !x.IsDeleted)
                         .OrderBy(o => o.OrderNo)
                         .ToListAsync();
@@ -308,6 +338,7 @@ namespace MapManagement.Services
                 return result;
             }
         }
+
 
         public async Task<Result<PagingResult<PagedList<Layer>>>> PaginateLayer(PagingParameter pagingParameter, string? nameFilter, long? typeFilter, string? layerNameFilter, bool? isVisibleFilter, string? layerGroupNameFilter, long? orderNoFilter, bool? isDeletedFilter)
         {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OrderManagement.DbContexts;
 
@@ -20,6 +21,7 @@ namespace OrderManagement.Migrations
                 .HasAnnotation("ProductVersion", "8.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("OrderManagement.Entity.ApiKey", b =>
@@ -150,6 +152,9 @@ namespace OrderManagement.Migrations
                     b.Property<long>("BasketId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("FileId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("InvoiceAddressId")
                         .HasColumnType("bigint");
 
@@ -185,9 +190,6 @@ namespace OrderManagement.Migrations
 
                     b.Property<DateTime?>("CompletionDate")
                         .HasColumnType("timestamp without time zone");
-
-                    b.Property<long?>("FileId")
-                        .HasColumnType("bigint");
 
                     b.Property<long>("OrderId")
                         .HasColumnType("bigint");
@@ -225,38 +227,54 @@ namespace OrderManagement.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<decimal?>("AreaKm2")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("BboxMaxX")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("BboxMaxY")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("BboxMinX")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("BboxMinY")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
                     b.Property<string>("City")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("CloudRate")
                         .HasColumnType("integer");
 
                     b.Property<string>("Currency")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("District")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("text");
 
                     b.Property<string>("DownloadLink")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
+
+                    b.Property<Geometry>("Geometry")
+                        .HasColumnType("geometry");
 
                     b.Property<bool?>("IsClassified")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsCustomArea")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsInMarket")
                         .HasColumnType("boolean");
 
                     b.Property<bool?>("IsOrthorectified")
@@ -267,34 +285,38 @@ namespace OrderManagement.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PreviewUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
 
                     b.Property<string>("PriceStr")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Provider")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestHash")
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("Resolution")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("SourceLabel")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("SourceType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ThumbnailUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
 
                     b.HasData(
                         new
@@ -302,7 +324,9 @@ namespace OrderManagement.Migrations
                             Id = 1L,
                             CategoryId = 2,
                             Currency = "TRY",
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             Name = "API Key",
                             Price = 1000m,
                             PriceStr = "₺1000"
@@ -320,7 +344,9 @@ namespace OrderManagement.Migrations
                             District = "Beşiktaş",
                             DownloadLink = "https://example.com/downloads/product-1.zip",
                             IsClassified = true,
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             IsOrthorectified = true,
                             IsPansharpened = true,
                             Name = "İstanbul Avrupa Yakası Uydu Görüntüsü - Beşiktaş",
@@ -344,7 +370,9 @@ namespace OrderManagement.Migrations
                             District = "Gölbaşı",
                             DownloadLink = "https://example.com/downloads/product-2.zip",
                             IsClassified = true,
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             IsOrthorectified = true,
                             IsPansharpened = false,
                             Name = "Ankara Tarım Analizi - Gölbaşı",
@@ -368,7 +396,9 @@ namespace OrderManagement.Migrations
                             District = "Karşıyaka",
                             DownloadLink = "https://example.com/downloads/product-3.zip",
                             IsClassified = false,
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             IsOrthorectified = true,
                             IsPansharpened = true,
                             Name = "İzmir Kıyı Uydu Görüntüsü",
@@ -392,7 +422,9 @@ namespace OrderManagement.Migrations
                             District = "Nilüfer",
                             DownloadLink = "https://example.com/downloads/product-4.zip",
                             IsClassified = true,
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             IsOrthorectified = true,
                             IsPansharpened = true,
                             Name = "Bursa Sanayi Bölgesi Uydu Verisi",
@@ -416,7 +448,9 @@ namespace OrderManagement.Migrations
                             District = "Alanya",
                             DownloadLink = "https://example.com/downloads/product-5.zip",
                             IsClassified = true,
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             IsOrthorectified = true,
                             IsPansharpened = false,
                             Name = "Antalya Kıyı Uydu Paketi",
@@ -440,7 +474,9 @@ namespace OrderManagement.Migrations
                             District = "Selçuklu",
                             DownloadLink = "https://example.com/downloads/product-6.zip",
                             IsClassified = true,
+                            IsCustomArea = false,
                             IsDeleted = false,
+                            IsInMarket = true,
                             IsOrthorectified = true,
                             IsPansharpened = false,
                             Name = "Konya Tarım Uydu Görüntüsü",

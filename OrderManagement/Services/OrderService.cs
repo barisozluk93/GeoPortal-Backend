@@ -75,7 +75,7 @@ namespace OrderManagement.Services
                                                     OrderDate = s.OrderDate,
                                                     OrderNo = s.OrderNo,
                                                     OrderStatus = s.OrderStatus,
-                                                });
+                                                }).OrderByDescending(x => x.OrderDate);
 
                     var pagination = PagedList<Order>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
 
@@ -97,9 +97,9 @@ namespace OrderManagement.Services
             return result;
         }
 
-        public async Task<Result<PagingResult<PagedList<OrderProduct>>>> ComingPaginate(PagingParameter pagingParameter, string token, string? orderNoFiler, decimal? priceMinFilter, decimal? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter)
+        public async Task<Result<PagingResult<PagedList<Order>>>> ComingPaginate(PagingParameter pagingParameter, string? orderNoFiler, double? priceMinFilter, double? priceMaxFilter, string? orderDateFromFilter, string? orderDateToFilter, long? orderStatusStrFilter)
         {
-            var result = new Result<PagingResult<PagedList<OrderProduct>>>();
+            var result = new Result<PagingResult<PagedList<Order>>>();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
@@ -120,23 +120,26 @@ namespace OrderManagement.Services
                         orderDateTo = parsedTo;
                     }
 
-                    var queryable = _dbContext.OrderProducts.Include(x => x.Order).Include(x => x.Product).Include(x => x.Product)
-                        .Where(x => (!String.IsNullOrEmpty(orderNoFiler) ? x.Order.OrderNo.ToLower().Contains(orderNoFiler.ToLower()) : true) &&
-                                    (priceMaxFilter.HasValue ? x.Product.Price <= priceMaxFilter : true) && (priceMinFilter.HasValue ? x.Product.Price >= priceMinFilter : true) &&
-                                    (orderDateFrom.HasValue ? x.Order.OrderDate >= orderDateFrom.Value : true) && (orderDateTo.HasValue ? x.Order.OrderDate <= orderDateTo.Value : true) &&
-                                    (orderStatusStrFilter.HasValue ? x.OrderStatus == orderStatusStrFilter : true))
-                        .Select(s => new OrderProduct
-                        {
-                            Id = s.Id,
-                            ProccessDate = s.ProccessDate,
-                            Order = s.Order,
-                            OrderStatus = s.OrderStatus,
-                            ProductId = s.ProductId,
-                            Product = s.Product
-                        });
+                    var queryable = _dbContext.Orders.Include(x => x.Basket)
+                                                .Where(x => (!String.IsNullOrEmpty(orderNoFiler) ? x.OrderNo.ToLower().Contains(orderNoFiler.ToLower()) : true) &&
+                                                            (priceMaxFilter.HasValue ? x.Price <= priceMaxFilter : true) && (priceMinFilter.HasValue ? x.Price >= priceMinFilter : true) &&
+                                                            (orderDateFrom.HasValue ? x.OrderDate >= orderDateFrom.Value : true) && (orderDateTo.HasValue ? x.OrderDate <= orderDateTo.Value : true) &&
+                                                            (orderStatusStrFilter.HasValue ? x.OrderStatus == orderStatusStrFilter : true))
+                                                .Select(s => new Order
+                                                {
+                                                    Id = s.Id,
+                                                    Price = s.Price,
+                                                    BasketId = s.BasketId,
+                                                    Basket = s.Basket,
+                                                    UserId = s.UserId,
+                                                    OrderDate = s.OrderDate,
+                                                    OrderNo = s.OrderNo,
+                                                    OrderStatus = s.OrderStatus,
+                                                }).OrderByDescending(x => x.OrderDate);
 
-                    var pagination = PagedList<OrderProduct>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
-                    result.SetData(new PagingResult<PagedList<OrderProduct>>()
+                    var pagination = PagedList<Order>.ToPagedList(queryable, pagingParameter.PageNumber, pagingParameter.PageSize);
+
+                    result.SetData(new PagingResult<PagedList<Order>>()
                     {
                         Items = pagination,
                         TotalCount = pagination.TotalCount,
@@ -177,7 +180,7 @@ namespace OrderManagement.Services
             return result;
         }
 
-        public async Task<Result<OrderProduct>> UpdateStatus(OrderProduct orderProduct, string token)
+        public async Task<Result<OrderProduct>> UpdateStatus(long id, long status, string token)
         {
             var result = new Result<OrderProduct>();
 
@@ -188,45 +191,44 @@ namespace OrderManagement.Services
                     string notificationMessage = "";
                     string notificationType = "";
 
-                    var item = await _dbContext.OrderProducts.Include(x => x.Product).Where(x => x.Id == orderProduct.Id).FirstOrDefaultAsync();
-                    var order = await _dbContext.Orders.Where(x => x.Id == orderProduct.OrderId).FirstOrDefaultAsync();
+                    var item = await _dbContext.OrderProducts.Include(x => x.Product).Where(x => x.Id == id).FirstOrDefaultAsync();
+                    var order = await _dbContext.Orders.Where(x => x.Id == item.OrderId).FirstOrDefaultAsync();
 
                     if (item != null)
                     {
-                        if(orderProduct.OrderStatus == 4)
+                        if(status == 4)
                         {
                             item.CompletionDate = DateTime.UtcNow;
                             notificationType = "ORDER_COMPLETED";
                         }
-                        else if (orderProduct.OrderStatus == 3)
+                        else if (status == 3)
                         {
                             notificationType = "ORDER_PREPARING";
                         }
-                        else if(orderProduct.OrderStatus == 2)
+                        else if(status == 2)
                         {
                             notificationType = "ORDER_REJECTED";
                         }
-                        else if (orderProduct.OrderStatus == 1)
+                        else if (status == 1)
                         {
                             notificationType = "ORDER_APPROVED";
                         }
 
                         item.ProccessDate = DateTime.UtcNow;
-                        item.OrderStatus = orderProduct.OrderStatus;
+                        item.OrderStatus = Convert.ToInt32(status);
                         await _dbContext.SaveChangesAsync();
 
-                        if (item.OrderStatus == 4)
+                        if (item.OrderStatus == 4 || item.OrderStatus == 2)
                         {
-                            if(!(_dbContext.OrderProducts.Where(x => x.OrderId == orderProduct.OrderId && x.OrderStatus != (int)OrderStatus.Tamamlandi).Any()))
+                            if(!(_dbContext.OrderProducts.Where(x => x.OrderId == item.OrderId && x.OrderStatus != (int)OrderStatus.Tamamlandi).Any()))
                             {
                                 order.OrderStatus = (int)OrderStatus.SiparisTamamlandi;
                                 await _dbContext.SaveChangesAsync();
                             }
                         }
-                        else if (item.OrderStatus == 2)
+                        else if (item.OrderStatus == 1)
                         {
-                            order.OrderStatus = (int)OrderStatus.SiparisTamamlandi;
-                            await _dbContext.SaveChangesAsync();
+                            //Uyduya gönderilecek ve durumu hazırlanıyora çevrilecek.
                         }
 
                         Notification notification = new Notification();
@@ -282,6 +284,7 @@ namespace OrderManagement.Services
                     basketProducts.ForEach(x => x.IsActive = false);
                     await _dbContext.SaveChangesAsync();
 
+                    bool isOrderCompleted = true;
                     foreach (var basketProduct in basketProducts)
                     {
                         OrderProduct orderProduct = new OrderProduct();
@@ -290,17 +293,17 @@ namespace OrderManagement.Services
                         orderProduct.ProccessDate = order.OrderDate.Value;
                         orderProduct.Product = basketProduct.Product;
 
-                        if (basketProduct.Product.CategoryId == 2)
+                        if (basketProduct.Product.CategoryId == 1)
                         {
                             orderProduct.OrderStatus = (int)OrderStatus.Tamamlandi;
-
-                            if (basketProducts.Count() == 1)
-                            {
-                                order.OrderStatus = (int)OrderStatus.SiparisTamamlandi;
-                            }
+                        }
+                        else if(basketProduct.Product.CategoryId == 2)
+                        {
+                            orderProduct.OrderStatus = (int)OrderStatus.Tamamlandi;
                         }
                         else
                         {
+                            isOrderCompleted = false;
                             orderProduct.OrderStatus = (int)OrderStatus.OnayBekliyor;
                         }
 
@@ -312,21 +315,6 @@ namespace OrderManagement.Services
                             var generatedApiKey = await CreateApiKeyAsync(order, orderProduct);
                             orderProduct.ProductValue = generatedApiKey;
                             await _dbContext.SaveChangesAsync();
-                        }
-
-                        if(order.OrderStatus == (int)OrderStatus.SiparisTamamlandi)
-                        {
-                            Notification notification = new Notification();
-                            notification.Type = "ORDER_COMPLETED";
-                            notification.Title = "GeoPortal";
-                            notification.Body = order.OrderNo + "/" + orderProduct.Product.Name;
-                            notification.IsDeleted = false;
-                            notification.IsRead = false;
-                            notification.UserId = order.UserId;
-                            notification.CreatedAt = DateTime.UtcNow;
-                            notification.TargetUrl = "" + order.Id;
-
-                            await SaveNotification(notification, token);
                         }
 
                         foreach (var superUser in superUsers)
@@ -345,8 +333,30 @@ namespace OrderManagement.Services
                         }
                     }
 
+                    if (isOrderCompleted)
+                    {
+                        order.OrderStatus = (int)OrderStatus.SiparisTamamlandi;
+                        await _dbContext.SaveChangesAsync();
 
-                    transaction.Commit();
+                        Notification notification = new Notification();
+                        notification.Type = "ORDER_COMPLETED";
+                        notification.Title = "GeoPortal";
+                        notification.Body = order.OrderNo;
+                        notification.IsDeleted = false;
+                        notification.IsRead = false;
+                        notification.UserId = order.UserId;
+                        notification.CreatedAt = DateTime.UtcNow;
+                        notification.TargetUrl = "" + order.Id;
+
+                        await SaveNotification(notification, token);
+                    }
+                    else
+                    {
+                        order.OrderStatus = (int)OrderStatus.SiparisTamamlanmadi;
+                        await _dbContext.SaveChangesAsync();
+                    }
+
+                        transaction.Commit();
 
                     result.SetData(order);
                     result.SetMessage("İşlem başarı ile gerçekleşti.");
@@ -379,14 +389,12 @@ namespace OrderManagement.Services
                                                     .Include(x => x.Product)
                                                     .Where(x => x.OrderId == id).ToListAsync();
 
+                    order.InvoiceAddress = await GetAddress(order.InvoiceAddressId, token);
 
-                    foreach (var orderProduct in order.OrderProducts)
+                    if (order.FileId.HasValue)
                     {
-                        if(orderProduct.FileId.HasValue)
-                        {
-                            orderProduct.FileName = GetFile(orderProduct.FileId.Value, token).Result.Key;
-                            orderProduct.FileResult = GetFile(orderProduct.FileId.Value, token).Result.Value;
-                        }
+                        order.FileName = (await GetFile(order.FileId.Value, token)).Key;
+                        order.FileResult = (await GetFile(order.FileId.Value, token)).Value;
                     }
 
                     result.SetData(order);
@@ -417,10 +425,10 @@ namespace OrderManagement.Services
 
                     orderProduct.Order.InvoiceAddress = await GetAddress(orderProduct.Order.InvoiceAddressId, token);
 
-                    if (orderProduct.FileId.HasValue)
+                    if (orderProduct.Order.FileId.HasValue)
                     {
-                        orderProduct.FileName = GetFile(orderProduct.FileId.Value, token).Result.Key;
-                        orderProduct.FileResult = GetFile(orderProduct.FileId.Value, token).Result.Value;
+                        orderProduct.Order.FileName = GetFile(orderProduct.Order.FileId.Value, token).Result.Key;
+                        orderProduct.Order.FileResult = GetFile(orderProduct.Order.FileId.Value, token).Result.Value;
                     }
 
                     result.SetData(orderProduct);
@@ -439,15 +447,15 @@ namespace OrderManagement.Services
             return result;
         }
 
-        public async Task<Result<OrderProduct>> AddInvoice(OrderProduct orderProduct, string token)
+        public async Task<Result<Order>> AddInvoice(long id, long fileId, string token)
         {
-            var result = new Result<OrderProduct>();
+            var result = new Result<Order>();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
-                    var item = await _dbContext.OrderProducts.Include(x => x.Product).Where(x => x.Id == orderProduct.Id).FirstOrDefaultAsync();
+                    var item = await _dbContext.Orders.Where(x => x.Id == id).FirstOrDefaultAsync();
 
                     if (item != null)
                     {
@@ -456,7 +464,19 @@ namespace OrderManagement.Services
                             var fileDeleteResult = DeleteFile(item.FileId.Value, token).Result;
                         }
 
-                        item.FileId = orderProduct.FileId;
+                        item.FileId = fileId;
+
+                        Notification notification = new Notification();
+                        notification.Type = "ADD_INVOICE";
+                        notification.Title = "GeoPortal";
+                        notification.Body = item.OrderNo;
+                        notification.IsDeleted = false;
+                        notification.IsRead = false;
+                        notification.UserId = item.UserId;
+                        notification.CreatedAt = DateTime.UtcNow;
+                        notification.TargetUrl = "" + item.Id;
+
+                        await SaveNotification(notification, token);
 
                         await _dbContext.SaveChangesAsync();
                         transaction.Commit();
@@ -477,15 +497,15 @@ namespace OrderManagement.Services
             return result;
         }
 
-        public async Task<Result<OrderProduct>> DeleteInvoice(long id, string token)
+        public async Task<Result<Order>> DeleteInvoice(long id, string token)
         {
-            var result = new Result<OrderProduct>();
+            var result = new Result<Order>();
 
             using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
             {
                 try
                 {
-                    var item = await _dbContext.OrderProducts.Include(x => x.Order).Include(x => x.Product).Where(x => x.Id == id).FirstOrDefaultAsync();
+                    var item = await _dbContext.Orders.Where(x => x.Id == id).FirstOrDefaultAsync();
 
                     if (item != null)
                     {

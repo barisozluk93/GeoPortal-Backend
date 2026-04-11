@@ -1,4 +1,5 @@
-﻿using OrderManagement.Model;
+﻿using Microsoft.AspNetCore.Mvc;
+using OrderManagement.Model;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderManagement.Entity
@@ -15,12 +16,16 @@ namespace OrderManagement.Entity
         [ForeignKey("BasketId")]
         public long BasketId { get; set; }
         public long InvoiceAddressId { get; set; }
+        public long? FileId { get; set; }
 
+        [NotMapped]
+        public FileContentResult? FileResult { get; set; }
+
+        [NotMapped]
+        public string? FileName { get; set; }
 
         [NotMapped]
         public List<OrderProduct>? OrderProducts { get; set; }
-
-
         [NotMapped]
         public UserAddress? InvoiceAddress { get; set; }
     }

@@ -9,4 +9,5 @@ public interface ITicketService
     Task<Result<Ticket?>> GetByIdAsync(long id);
     Task<Result<bool>> UpdateStatusAsync(long id, string status);
     Task<Result<bool>> ReplyAsync(long ticketId, string adminEmail, string message);
+    Task<byte[]> ExportExcel(string token);
 }

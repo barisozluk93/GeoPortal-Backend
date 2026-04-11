@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Data;
-using OrderManagement.Interfaces;
-using OrderManagement.DbContexts;
-using OrderManagement.Model;
-using OrderManagement.Entity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.IO;
 using Newtonsoft.Json;
+using OrderManagement.DbContexts;
+using OrderManagement.Entity;
+using OrderManagement.Interfaces;
+using OrderManagement.Model;
+using System.Data;
 using System.Net.Http.Headers;
 
 namespace OrderManagement.Services
@@ -179,8 +180,26 @@ namespace OrderManagement.Services
                         await _dbContext.SaveChangesAsync();
                     }
 
+                    long productId = newBasket.ProductId;
+                    if (newBasket.ProductId == 0)
+                    {
+                        var reader = new WKTReader();
+                        var geometry = reader.Read(newBasket.Product.Wkt);
+                        geometry.SRID = 4326;
+                        newBasket.Product.Geometry = geometry;
+
+                        var newProduct = new Product();
+                        newProduct = newBasket.Product;
+                        _dbContext.Add(newProduct);
+                        await _dbContext.SaveChangesAsync();
+                        productId = newProduct.Id;
+                        newBasket.Product.Geometry = null;
+                        newBasket.ProductId = productId;
+                    }
+
+
                     BasketProduct basketProduct = new BasketProduct();
-                    basketProduct.ProductId = newBasket.ProductId;
+                    basketProduct.ProductId = productId;
                     basketProduct.BasketId = basket.Id;
                     basketProduct.IsDeleted = false;
                     basketProduct.IsActive = true;
@@ -227,8 +246,25 @@ namespace OrderManagement.Services
 
                     foreach (var item in basketList)
                     {
+                        long productId = item.ProductId;
+                        if(item.ProductId == 0)
+                        {
+                            var reader = new WKTReader();
+                            var geometry = reader.Read(item.Product.Wkt);
+                            geometry.SRID = 4326;
+                            item.Product.Geometry = geometry;
+
+                            var newProduct = new Product();
+                            newProduct = item.Product;
+                            _dbContext.Add(newProduct);
+                            await _dbContext.SaveChangesAsync();
+                            productId = newProduct.Id;
+                            item.Product.Geometry = null;
+                            item.ProductId = productId;
+                        }
+
                         BasketProduct basketProduct = new BasketProduct();
-                        basketProduct.ProductId = item.ProductId;
+                        basketProduct.ProductId = productId;
                         basketProduct.BasketId = basket.Id;
                         basketProduct.IsDeleted = false;
                         basketProduct.IsActive = true;

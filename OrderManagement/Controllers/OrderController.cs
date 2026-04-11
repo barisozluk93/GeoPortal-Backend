@@ -38,14 +38,14 @@ namespace OrderManagement.Controllers
             return new OkObjectResult(result);
         }
 
-        [HttpPost("UpdateStatus")]
+        [HttpGet("UpdateStatus/{id}/{status}")]
         [Authorize]
         [HasPermission("OrderScene.Edit.Permission")]
-        public async Task<IActionResult> UpdateStatus([FromBody] OrderProduct orderProduct)
+        public async Task<IActionResult> UpdateStatus(long id, long status)
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
 
-            var result = await _orderService.UpdateStatus(orderProduct, token);
+            var result = await _orderService.UpdateStatus(id, status, token);
             return new OkObjectResult(result);
         }
 
@@ -74,22 +74,20 @@ namespace OrderManagement.Controllers
         [HttpGet("ComingPaginate")]
         [Authorize]
         [HasPermission("OrderScene.Paging.Permission")]
-        public async Task<IActionResult> ComingPaginate([FromQuery] PagingParameter pagingParameter, [FromQuery] string? orderNo, [FromQuery] decimal? priceMin, decimal? priceMax, [FromQuery] string? orderDateFrom, [FromQuery] string? orderDateTo, [FromQuery] long? orderStatusStr)
+        public async Task<IActionResult> ComingPaginate([FromQuery] PagingParameter pagingParameter, [FromQuery] string? orderNo, [FromQuery] double? priceMin, double? priceMax, [FromQuery] string? orderDateFrom, [FromQuery] string? orderDateTo, [FromQuery] long? orderStatusStr)
         {
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
-
-            var result = await _orderService.ComingPaginate(pagingParameter, token, orderNo, priceMin, priceMax, orderDateFrom, orderDateTo, orderStatusStr);
+            var result = await _orderService.ComingPaginate(pagingParameter, orderNo, priceMin, priceMax, orderDateFrom, orderDateTo, orderStatusStr);
             return new OkObjectResult(result);
         }
 
-        [HttpPost("AddInvoice")]
+        [HttpGet("AddInvoice/{id}/{fileId}")]
         [Authorize]
         [HasPermission("OrderScene.InvoiceSave.Permission")]
-        public async Task<IActionResult> AddInvoice([FromBody] OrderProduct orderProduct)
+        public async Task<IActionResult> AddInvoice(long id, long fileId)
         {
             var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
 
-            var result = await _orderService.AddInvoice(orderProduct, token);
+            var result = await _orderService.AddInvoice(id, fileId, token);
             return new OkObjectResult(result);
         }
 
