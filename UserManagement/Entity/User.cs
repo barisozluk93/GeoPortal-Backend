@@ -25,6 +25,8 @@ namespace UserManagement.Entity
         public bool IsSystemData { get; set; }
         public long? FileId { get; set; }
 
+        public string? Sector { get; set; }
+
         [NotMapped]
         public List<long> Organizations { get; set; } = new List<long>();
 

@@ -59,10 +59,9 @@ app.Run();
 
 //app.UseForwardedHeaders();
 
-//app.UsePathBase("/geoPortalApi");
 
 //app.UseCors(options =>
-//    options.WithOrigins("http://localhost:4200", "http://178.251.42.243:8080")
+//    options.WithOrigins("http://localhost:4200", "https://taiearth.com")
 //           .AllowAnyHeader()
 //           .AllowAnyMethod()
 //           .AllowCredentials()

@@ -43,8 +43,7 @@ namespace OrderManagement.Migrations
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<long>("OrderId")
                         .HasColumnType("bigint");
@@ -57,14 +56,11 @@ namespace OrderManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Key")
-                        .IsUnique();
-
                     b.HasIndex("OrderId");
 
                     b.HasIndex("OrderProductId");
 
-                    b.ToTable("ApiKeys", (string)null);
+                    b.ToTable("ApiKeys");
                 });
 
             modelBuilder.Entity("OrderManagement.Entity.ApiKeyPermission", b =>
@@ -80,14 +76,13 @@ namespace OrderManagement.Migrations
 
                     b.Property<string>("Endpoint")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ApiKeyId");
 
-                    b.ToTable("ApiKeyPermissions", (string)null);
+                    b.ToTable("ApiKeyPermissions");
                 });
 
             modelBuilder.Entity("OrderManagement.Entity.Basket", b =>
@@ -226,8 +221,17 @@ namespace OrderManagement.Migrations
                     b.Property<DateTime?>("AcquisitionDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<DateTime?>("AcquisitionEndDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("AcquisitionStartDate")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<decimal?>("AreaKm2")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("BandId")
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("BboxMaxX")
                         .HasColumnType("numeric");
@@ -241,16 +245,22 @@ namespace OrderManagement.Migrations
                     b.Property<decimal?>("BboxMinY")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("CatalogId")
+                        .HasColumnType("text");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
                     b.Property<string>("City")
                         .HasColumnType("text");
 
-                    b.Property<int?>("CloudRate")
-                        .HasColumnType("integer");
+                    b.Property<decimal?>("CloudRate")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Currency")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DataOwner")
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
@@ -262,8 +272,23 @@ namespace OrderManagement.Migrations
                     b.Property<string>("DownloadLink")
                         .HasColumnType("text");
 
+                    b.Property<string>("FootprintPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GeoTiffPath")
+                        .HasColumnType("text");
+
                     b.Property<Geometry>("Geometry")
                         .HasColumnType("geometry");
+
+                    b.Property<string>("ImageDescriptor")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageType")
+                        .HasColumnType("text");
 
                     b.Property<bool?>("IsClassified")
                         .HasColumnType("boolean");
@@ -283,8 +308,26 @@ namespace OrderManagement.Migrations
                     b.Property<bool?>("IsPansharpened")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("MetadataPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MetadataUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("OffNadirAngle")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OutputFormat")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PreviewPath")
                         .HasColumnType("text");
 
                     b.Property<string>("PreviewUrl")
@@ -296,20 +339,53 @@ namespace OrderManagement.Migrations
                     b.Property<string>("PriceStr")
                         .HasColumnType("text");
 
+                    b.Property<string>("ProcessingLevel")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProductLevel")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProductType")
+                        .HasColumnType("text");
+
                     b.Property<string>("Provider")
                         .HasColumnType("text");
 
-                    b.Property<string>("RequestHash")
+                    b.Property<string>("QuicklookPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RadiometricLevel")
                         .HasColumnType("text");
 
                     b.Property<decimal?>("Resolution")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("Satellite")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScanDirection")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Sensor")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SensorMode")
+                        .HasColumnType("text");
+
                     b.Property<string>("SourceLabel")
                         .HasColumnType("text");
 
-                    b.Property<int?>("SourceType")
-                        .HasColumnType("integer");
+                    b.Property<string>("SpatialReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StripId")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("SunAzimuth")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("SunElevation")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("ThumbnailUrl")
                         .HasColumnType("text");
@@ -317,375 +393,33 @@ namespace OrderManagement.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CategoryId = 2,
-                            Currency = "TRY",
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            Name = "API Key",
-                            Price = 1000m,
-                            PriceStr = "₺1000"
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            AcquisitionDate = new DateTime(2026, 3, 12, 10, 15, 0, 0, DateTimeKind.Unspecified),
-                            AreaKm2 = 42.8m,
-                            CategoryId = 1,
-                            City = "İstanbul",
-                            CloudRate = 4,
-                            Currency = "TRY",
-                            Description = "Yüksek çözünürlüklü şehir uydu görüntüsü.",
-                            District = "Beşiktaş",
-                            DownloadLink = "https://example.com/downloads/product-1.zip",
-                            IsClassified = true,
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            IsOrthorectified = true,
-                            IsPansharpened = true,
-                            Name = "İstanbul Avrupa Yakası Uydu Görüntüsü - Beşiktaş",
-                            PreviewUrl = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200",
-                            Price = 18500m,
-                            PriceStr = "₺18.500",
-                            Provider = "Maxar",
-                            Resolution = 0.3m,
-                            ThumbnailUrl = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600"
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            AcquisitionDate = new DateTime(2026, 2, 28, 9, 40, 0, 0, DateTimeKind.Unspecified),
-                            AreaKm2 = 87.4m,
-                            CategoryId = 2,
-                            City = "Ankara",
-                            CloudRate = 9,
-                            Currency = "TRY",
-                            Description = "Tarım alanları için analiz verisi.",
-                            District = "Gölbaşı",
-                            DownloadLink = "https://example.com/downloads/product-2.zip",
-                            IsClassified = true,
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            IsOrthorectified = true,
-                            IsPansharpened = false,
-                            Name = "Ankara Tarım Analizi - Gölbaşı",
-                            PreviewUrl = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1200",
-                            Price = 12400m,
-                            PriceStr = "₺12.400",
-                            Provider = "Planet",
-                            Resolution = 0.5m,
-                            ThumbnailUrl = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600"
-                        },
-                        new
-                        {
-                            Id = 4L,
-                            AcquisitionDate = new DateTime(2026, 3, 5, 14, 20, 0, 0, DateTimeKind.Unspecified),
-                            AreaKm2 = 58.9m,
-                            CategoryId = 3,
-                            City = "İzmir",
-                            CloudRate = 6,
-                            Currency = "TRY",
-                            Description = "Kıyı ve şehir birleşik uydu görüntüsü.",
-                            District = "Karşıyaka",
-                            DownloadLink = "https://example.com/downloads/product-3.zip",
-                            IsClassified = false,
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            IsOrthorectified = true,
-                            IsPansharpened = true,
-                            Name = "İzmir Kıyı Uydu Görüntüsü",
-                            PreviewUrl = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200",
-                            Price = 21800m,
-                            PriceStr = "₺21.800",
-                            Provider = "Airbus",
-                            Resolution = 0.4m,
-                            ThumbnailUrl = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600"
-                        },
-                        new
-                        {
-                            Id = 5L,
-                            AcquisitionDate = new DateTime(2026, 1, 19, 11, 10, 0, 0, DateTimeKind.Unspecified),
-                            AreaKm2 = 65.1m,
-                            CategoryId = 4,
-                            City = "Bursa",
-                            CloudRate = 3,
-                            Currency = "TRY",
-                            Description = "Sanayi alanı analiz görüntüsü.",
-                            District = "Nilüfer",
-                            DownloadLink = "https://example.com/downloads/product-4.zip",
-                            IsClassified = true,
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            IsOrthorectified = true,
-                            IsPansharpened = true,
-                            Name = "Bursa Sanayi Bölgesi Uydu Verisi",
-                            PreviewUrl = "https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=1200",
-                            Price = 16750m,
-                            PriceStr = "₺16.750",
-                            Provider = "Maxar",
-                            Resolution = 0.3m,
-                            ThumbnailUrl = "https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=600"
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            AcquisitionDate = new DateTime(2026, 3, 18, 8, 30, 0, 0, DateTimeKind.Unspecified),
-                            AreaKm2 = 73.6m,
-                            CategoryId = 5,
-                            City = "Antalya",
-                            CloudRate = 7,
-                            Currency = "TRY",
-                            Description = "Turizm ve kıyı analiz verisi.",
-                            District = "Alanya",
-                            DownloadLink = "https://example.com/downloads/product-5.zip",
-                            IsClassified = true,
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            IsOrthorectified = true,
-                            IsPansharpened = false,
-                            Name = "Antalya Kıyı Uydu Paketi",
-                            PreviewUrl = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200",
-                            Price = 14300m,
-                            PriceStr = "₺14.300",
-                            Provider = "Planet",
-                            Resolution = 0.5m,
-                            ThumbnailUrl = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600"
-                        },
-                        new
-                        {
-                            Id = 7L,
-                            AcquisitionDate = new DateTime(2026, 2, 11, 16, 45, 0, 0, DateTimeKind.Unspecified),
-                            AreaKm2 = 120.3m,
-                            CategoryId = 2,
-                            City = "Konya",
-                            CloudRate = 12,
-                            Currency = "TRY",
-                            Description = "Geniş tarım alanı gözlemi.",
-                            District = "Selçuklu",
-                            DownloadLink = "https://example.com/downloads/product-6.zip",
-                            IsClassified = true,
-                            IsCustomArea = false,
-                            IsDeleted = false,
-                            IsInMarket = true,
-                            IsOrthorectified = true,
-                            IsPansharpened = false,
-                            Name = "Konya Tarım Uydu Görüntüsü",
-                            PreviewUrl = "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200",
-                            Price = 9800m,
-                            PriceStr = "₺9.800",
-                            Provider = "Sentinel",
-                            Resolution = 1.0m,
-                            ThumbnailUrl = "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600"
-                        });
                 });
 
             modelBuilder.Entity("OrderManagement.Entity.ProductClass", b =>
                 {
-                    b.Property<long?>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long?>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ClassName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ColorHex")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("PixelCount")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("ProductId")
+                    b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductClasses", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            ClassName = "Yerleşim",
-                            ColorHex = "#ff6b6b",
-                            PixelCount = 124500,
-                            ProductId = 2L
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            ClassName = "Yol",
-                            ColorHex = "#ffd166",
-                            PixelCount = 48210,
-                            ProductId = 2L
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            ClassName = "Yeşil Alan",
-                            ColorHex = "#06d6a0",
-                            PixelCount = 38120,
-                            ProductId = 2L
-                        },
-                        new
-                        {
-                            Id = 4L,
-                            ClassName = "Su",
-                            ColorHex = "#118ab2",
-                            PixelCount = 19340,
-                            ProductId = 2L
-                        },
-                        new
-                        {
-                            Id = 5L,
-                            ClassName = "Tarım Alanı",
-                            ColorHex = "#8ac926",
-                            PixelCount = 211430,
-                            ProductId = 3L
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            ClassName = "Boş Arazi",
-                            ColorHex = "#c2b280",
-                            PixelCount = 73450,
-                            ProductId = 3L
-                        },
-                        new
-                        {
-                            Id = 7L,
-                            ClassName = "Yol",
-                            ColorHex = "#adb5bd",
-                            PixelCount = 19410,
-                            ProductId = 3L
-                        },
-                        new
-                        {
-                            Id = 8L,
-                            ClassName = "Su",
-                            ColorHex = "#1982c4",
-                            PixelCount = 16420,
-                            ProductId = 3L
-                        },
-                        new
-                        {
-                            Id = 9L,
-                            ClassName = "Yerleşim",
-                            ColorHex = "#ef476f",
-                            PixelCount = 98400,
-                            ProductId = 4L
-                        },
-                        new
-                        {
-                            Id = 10L,
-                            ClassName = "Su",
-                            ColorHex = "#3a86ff",
-                            PixelCount = 62450,
-                            ProductId = 4L
-                        },
-                        new
-                        {
-                            Id = 11L,
-                            ClassName = "Liman",
-                            ColorHex = "#8338ec",
-                            PixelCount = 14200,
-                            ProductId = 4L
-                        },
-                        new
-                        {
-                            Id = 12L,
-                            ClassName = "Sanayi",
-                            ColorHex = "#ff9f1c",
-                            PixelCount = 110230,
-                            ProductId = 5L
-                        },
-                        new
-                        {
-                            Id = 13L,
-                            ClassName = "Yol",
-                            ColorHex = "#adb5bd",
-                            PixelCount = 36610,
-                            ProductId = 5L
-                        },
-                        new
-                        {
-                            Id = 14L,
-                            ClassName = "Yeşil Alan",
-                            ColorHex = "#2ec4b6",
-                            PixelCount = 22780,
-                            ProductId = 5L
-                        },
-                        new
-                        {
-                            Id = 15L,
-                            ClassName = "Otel Bölgesi",
-                            ColorHex = "#ff595e",
-                            PixelCount = 45220,
-                            ProductId = 6L
-                        },
-                        new
-                        {
-                            Id = 16L,
-                            ClassName = "Kıyı",
-                            ColorHex = "#1982c4",
-                            PixelCount = 33910,
-                            ProductId = 6L
-                        },
-                        new
-                        {
-                            Id = 17L,
-                            ClassName = "Yol",
-                            ColorHex = "#6c757d",
-                            PixelCount = 20110,
-                            ProductId = 6L
-                        },
-                        new
-                        {
-                            Id = 18L,
-                            ClassName = "Yeşil Alan",
-                            ColorHex = "#8ac926",
-                            PixelCount = 28440,
-                            ProductId = 6L
-                        },
-                        new
-                        {
-                            Id = 19L,
-                            ClassName = "Tarım Alanı",
-                            ColorHex = "#8ac926",
-                            PixelCount = 402800,
-                            ProductId = 7L
-                        },
-                        new
-                        {
-                            Id = 20L,
-                            ClassName = "Boş Arazi",
-                            ColorHex = "#c2b280",
-                            PixelCount = 95420,
-                            ProductId = 7L
-                        },
-                        new
-                        {
-                            Id = 21L,
-                            ClassName = "Sulama Kanalı",
-                            ColorHex = "#3a86ff",
-                            PixelCount = 11840,
-                            ProductId = 7L
-                        });
+                    b.ToTable("ProductClasses");
                 });
 
             modelBuilder.Entity("OrderManagement.Entity.ApiKey", b =>
@@ -772,7 +506,8 @@ namespace OrderManagement.Migrations
                     b.HasOne("OrderManagement.Entity.Product", "Product")
                         .WithMany("Classes")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Product");
                 });

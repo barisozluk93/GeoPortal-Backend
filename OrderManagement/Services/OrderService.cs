@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using OrderManagement.DbContexts;
 using OrderManagement.Entity;
@@ -191,12 +193,33 @@ namespace OrderManagement.Services
                     string notificationMessage = "";
                     string notificationType = "";
 
-                    var item = await _dbContext.OrderProducts.Include(x => x.Product).Where(x => x.Id == id).FirstOrDefaultAsync();
-                    var order = await _dbContext.Orders.Where(x => x.Id == item.OrderId).FirstOrDefaultAsync();
+                    var item = await _dbContext.OrderProducts
+                        .Include(x => x.Order)
+                        .Include(x => x.Product)
+                        .Where(x => x.Id == id)
+                        .FirstOrDefaultAsync();
+
+                    if (item == null)
+                    {
+                        result.SetIsSuccess(false);
+                        result.SetMessage("Sipariş ürünü bulunamadı.");
+                        return result;
+                    }
+
+                    var order = await _dbContext.Orders
+                        .Where(x => x.Id == item.OrderId)
+                        .FirstOrDefaultAsync();
+
+                    if (order == null)
+                    {
+                        result.SetIsSuccess(false);
+                        result.SetMessage("Sipariş bulunamadı.");
+                        return result;
+                    }
 
                     if (item != null)
                     {
-                        if(status == 4)
+                        if (status == 4)
                         {
                             item.CompletionDate = DateTime.UtcNow;
                             notificationType = "ORDER_COMPLETED";
@@ -205,7 +228,7 @@ namespace OrderManagement.Services
                         {
                             notificationType = "ORDER_PREPARING";
                         }
-                        else if(status == 2)
+                        else if (status == 2)
                         {
                             notificationType = "ORDER_REJECTED";
                         }
@@ -220,7 +243,7 @@ namespace OrderManagement.Services
 
                         if (item.OrderStatus == 4 || item.OrderStatus == 2)
                         {
-                            if(!(_dbContext.OrderProducts.Where(x => x.OrderId == item.OrderId && x.OrderStatus != (int)OrderStatus.Tamamlandi).Any()))
+                            if (!(_dbContext.OrderProducts.Where(x => x.OrderId == item.OrderId && x.OrderStatus != (int)OrderStatus.Tamamlandi).Any()))
                             {
                                 order.OrderStatus = (int)OrderStatus.SiparisTamamlandi;
                                 await _dbContext.SaveChangesAsync();
@@ -297,7 +320,7 @@ namespace OrderManagement.Services
                         {
                             orderProduct.OrderStatus = (int)OrderStatus.Tamamlandi;
                         }
-                        else if(basketProduct.Product.CategoryId == 2)
+                        else if (basketProduct.Product.CategoryId == 2)
                         {
                             orderProduct.OrderStatus = (int)OrderStatus.Tamamlandi;
                         }
@@ -356,7 +379,7 @@ namespace OrderManagement.Services
                         await _dbContext.SaveChangesAsync();
                     }
 
-                        transaction.Commit();
+                    transaction.Commit();
 
                     result.SetData(order);
                     result.SetMessage("İşlem başarı ile gerçekleşti.");
@@ -387,7 +410,13 @@ namespace OrderManagement.Services
                     order.OrderProducts = await _dbContext.OrderProducts
                                                     .Include(x => x.Order)
                                                     .Include(x => x.Product)
-                                                    .Where(x => x.OrderId == id).ToListAsync();
+                                                    .Where(x => x.OrderId == id)
+                                                    .ToListAsync();
+
+                    foreach (var orderProduct in order.OrderProducts)
+                    {
+                        PrepareProductForResponse(orderProduct.Product);
+                    }
 
                     order.InvoiceAddress = await GetAddress(order.InvoiceAddressId, token);
 
@@ -421,7 +450,20 @@ namespace OrderManagement.Services
             {
                 try
                 {
-                    var orderProduct = await _dbContext.OrderProducts.Include(x => x.Order).Include(x => x.Product).Where(x => x.Id == id).FirstOrDefaultAsync();
+                    var orderProduct = await _dbContext.OrderProducts
+                        .Include(x => x.Order)
+                        .Include(x => x.Product)
+                        .Where(x => x.Id == id)
+                        .FirstOrDefaultAsync();
+
+                    if (orderProduct == null)
+                    {
+                        result.SetIsSuccess(false);
+                        result.SetMessage("Sipariş ürünü bulunamadı.");
+                        return result;
+                    }
+
+                    PrepareProductForResponse(orderProduct.Product);
 
                     orderProduct.Order.InvoiceAddress = await GetAddress(orderProduct.Order.InvoiceAddressId, token);
 
@@ -1069,7 +1111,25 @@ namespace OrderManagement.Services
             }
 
             return request;
-        } 
+        }
+
+        private static void PrepareProductForResponse(Product? product)
+        {
+            if (product == null)
+                return;
+
+            product.Wkt = product.Geometry != null
+                ? ConvertToWkt(product.Geometry)
+                : null;
+
+            product.Geometry = null;
+        }
+
+        private static string ConvertToWkt(Geometry geometry)
+        {
+            var writer = new WKTWriter();
+            return writer.Write(geometry);
+        }
     }
 }
 

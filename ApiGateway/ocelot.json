@@ -1,6 +1,18 @@
 {
   "Routes": [
     {
+      "DownstreamPathTemplate": "/files/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5161
+        }
+      ],
+      "UpstreamPathTemplate": "/files/{everything}",
+      "UpstreamHttpMethod": [ "Get" ]
+    },
+    {
       "DownstreamPathTemplate": "/geoPortalApi/Organization/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -181,26 +193,38 @@
       "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
     },
     {
-        "DownstreamPathTemplate": "/geoPortalApi/Export/{everything}",
-        "DownstreamScheme": "http",
-        "DownstreamHostAndPorts": [
-          {
-            "Host": "localhost",
-            "Port": 5180
-          }
-        ],
-        "UpstreamPathTemplate": "/geoPortalApi/Export/{everything}",
-        "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
-      }
-    ],
-    "GlobalConfiguration": {
-      "BaseUrl": "http://localhost:5065"
-
+      "DownstreamPathTemplate": "/geoPortalApi/Export/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5181
+        }
+      ],
+      "UpstreamPathTemplate": "/geoPortalApi/Export/{everything}",
+      "UpstreamHttpMethod": [ "Post", "Options", "Get", "Put", "Delete" ]
     }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5065"
+
   }
+}
 
 //{
 //  "Routes": [
+//{
+//  "DownstreamPathTemplate": "/files/{everything}",
+//  "DownstreamScheme": "http",
+//  "DownstreamHostAndPorts": [
+//    {
+//      "Host": "localhost",
+//      "Port": 5161
+//    }
+//  ],
+//  "UpstreamPathTemplate": "/files/{everything}",
+//  "UpstreamHttpMethod": [ "Get" ]
+//},
 //    {
 //      "DownstreamPathTemplate": "/geoPortalApi/Organization/{everything}",
 //      "DownstreamScheme": "http",
@@ -375,7 +399,7 @@
 //      "DownstreamHostAndPorts": [
 //        {
 //          "Host": "localhost",
-//          "Port": 5180
+//          "Port": 5181
 //        }
 //      ],
 //      "UpstreamPathTemplate": "/Export/{everything}",

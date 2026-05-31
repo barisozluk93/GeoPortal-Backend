@@ -1,0 +1,1 @@
+Her footprint ayrı klasördedir. Shapefile dosyaları GIS_FILES içindedir. IMAGE klasörü ve QUICKLOOK dosyaları data1 örnek arşivinden rastgele atanmıştır. Büyük görüntü dosyaları arşiv içinde hardlink olarak saklanmıştır; çıkardıktan sonra GIS uygulamaları normal dosya gibi okur.

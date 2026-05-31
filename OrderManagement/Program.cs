@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using OrderManagement.Authorization;
 using OrderManagement.DbContexts;
 using OrderManagement.Interfaces;
+using OrderManagement.Seed;
 using OrderManagement.Services;
+using System;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -86,6 +89,23 @@ else
     scope.ServiceProvider.GetRequiredService<OrderManagementContext>().Database.Migrate();
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<OrderManagementContext>();
+    var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+
+    await ProductSeeder.SeedAsync(db, env, Configuration);
+}
+
+app.UseStaticFiles();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(AppContext.BaseDirectory, "Data")),
+    RequestPath = "/files",
+    ServeUnknownFileTypes = true
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
@@ -96,6 +116,5 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 
-//app.Run("http://159.223.219.238:5161");
 app.Run();
 

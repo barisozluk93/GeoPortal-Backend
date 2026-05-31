@@ -73,6 +73,21 @@ namespace MapManagement.Migrations
                     b.HasIndex("LayerGroupId");
 
                     b.ToTable("Layers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreatedAt = new DateTime(2026, 4, 18, 13, 22, 52, 962, DateTimeKind.Utc).AddTicks(6817),
+                            IsDeleted = false,
+                            IsVisible = true,
+                            LayerGroupId = 1L,
+                            Name = "OSM Standart",
+                            Opacity = 1.0,
+                            OrderNo = 1,
+                            Type = 1,
+                            Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        });
                 });
 
             modelBuilder.Entity("MapManagement.Entity.LayerGroup", b =>
@@ -103,7 +118,7 @@ namespace MapManagement.Migrations
                             Id = 1L,
                             IsDeleted = false,
                             Name = "Altlık Haritalar",
-                            OrderNo = 0
+                            OrderNo = 1
                         });
                 });
 

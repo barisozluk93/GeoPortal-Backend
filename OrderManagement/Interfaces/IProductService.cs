@@ -7,6 +7,6 @@ namespace OrderManagement.Interfaces
     {
         Task<Result<PagingResult<PagedList<Product>>>> Paginate(PagingParameter pagingParameter);
         Task<Result<Product>> GetById(long id);
-       
+        Task<List<ProductSmartFilterResult>> SmartFilterAsync(ProductSmartFilterRequest request);
     }
 }

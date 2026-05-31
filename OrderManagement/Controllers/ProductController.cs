@@ -33,5 +33,14 @@ namespace OrderManagement.Controllers
             return new OkObjectResult(result);
         }
 
+        [HttpPost("SmartFilter")]
+        [AllowAnonymous]
+
+        public async Task<IActionResult> SmartFilter([FromBody] ProductSmartFilterRequest request)
+        {
+            var result = await _productService.SmartFilterAsync(request);
+            return Ok(result);
+        }
+
     }
 }

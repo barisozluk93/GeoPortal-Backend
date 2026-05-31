@@ -1386,6 +1386,9 @@ namespace UserManagement.Migrations
                     b.Property<byte[]>("Salt")
                         .HasColumnType("bytea");
 
+                    b.Property<string>("Sector")
+                        .HasColumnType("text");
+
                     b.Property<string>("Surname")
                         .IsRequired()
                         .HasColumnType("text");
