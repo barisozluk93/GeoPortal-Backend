@@ -115,8 +115,26 @@ namespace OrderManagement.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("AoiId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AoiName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AoiWkt")
+                        .HasColumnType("text");
+
+                    b.Property<double>("BaseTotalPrice")
+                        .HasColumnType("double precision");
+
                     b.Property<long>("BasketId")
                         .HasColumnType("bigint");
+
+                    b.Property<double>("CalculatedTotalPrice")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("IntersectionWkt")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -124,14 +142,41 @@ namespace OrderManagement.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ItemType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("NumberOf")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProcessingOptionsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<double>("ProcessingTotalPrice")
+                        .HasColumnType("double precision");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
+                    b.Property<double>("RequestAreaKm2")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("RequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RequestWkt")
+                        .HasColumnType("text");
+
+                    b.Property<double>("UnitPrice")
+                        .HasColumnType("double precision");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("BasketId");
-
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("BasketId", "ProductId", "AoiId", "RequestHash");
 
                     b.ToTable("BasketProducts");
                 });
@@ -183,8 +228,33 @@ namespace OrderManagement.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("AoiId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AoiName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AoiWkt")
+                        .HasColumnType("text");
+
+                    b.Property<double>("BaseTotalPrice")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("CalculatedTotalPrice")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTime?>("CompletionDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("IntersectionWkt")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ItemType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("NumberOf")
+                        .HasColumnType("integer");
 
                     b.Property<long>("OrderId")
                         .HasColumnType("bigint");
@@ -195,11 +265,27 @@ namespace OrderManagement.Migrations
                     b.Property<DateTime?>("ProccessDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("ProcessingOptionsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<double>("ProcessingTotalPrice")
+                        .HasColumnType("double precision");
+
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("ProductValue")
                         .HasColumnType("text");
+
+                    b.Property<double>("RequestAreaKm2")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("RequestWkt")
+                        .HasColumnType("text");
+
+                    b.Property<double>("UnitPrice")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -302,6 +388,9 @@ namespace OrderManagement.Migrations
                     b.Property<bool>("IsInMarket")
                         .HasColumnType("boolean");
 
+                    b.Property<bool?>("IsNVDIAnalysis")
+                        .HasColumnType("boolean");
+
                     b.Property<bool?>("IsOrthorectified")
                         .HasColumnType("boolean");
 
@@ -339,6 +428,9 @@ namespace OrderManagement.Migrations
                     b.Property<string>("PriceStr")
                         .HasColumnType("text");
 
+                    b.Property<string>("Priority")
+                        .HasColumnType("text");
+
                     b.Property<string>("ProcessingLevel")
                         .HasColumnType("text");
 
@@ -346,6 +438,9 @@ namespace OrderManagement.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ProductType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PropertyUrl")
                         .HasColumnType("text");
 
                     b.Property<string>("Provider")

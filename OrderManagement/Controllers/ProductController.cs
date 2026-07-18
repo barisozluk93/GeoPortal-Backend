@@ -42,5 +42,14 @@ namespace OrderManagement.Controllers
             return Ok(result);
         }
 
+        [HttpGet("GetMarketAcquisitionDateRange")]
+        [AllowAnonymous]
+
+        public async Task<IActionResult> GetMarketAcquisitionDateRangeAsync()
+        {
+            var result = await _productService.GetMarketAcquisitionDateRangeAsync();
+            return Ok(result);
+        }
+
     }
 }

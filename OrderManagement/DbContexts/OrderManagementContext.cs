@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OrderManagement.Entity;
 using System;
 
@@ -43,6 +43,24 @@ namespace OrderManagement.DbContexts
         {
             modelBuilder.HasPostgresExtension("postgis");
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderManagementContext).Assembly);
+
+            modelBuilder.Entity<BasketProduct>().Property(x => x.RequestHash).HasMaxLength(64);
+
+            modelBuilder.Entity<BasketProduct>().HasIndex(x => new
+            {
+                x.BasketId,
+                x.ProductId,
+                x.AoiId,
+                x.RequestHash
+            });
+
+            modelBuilder.Entity<BasketProduct>()
+                .Property(x => x.ProcessingOptionsJson)
+                .HasColumnType("jsonb");
+
+            modelBuilder.Entity<OrderProduct>()
+                .Property(x => x.ProcessingOptionsJson)
+                .HasColumnType("jsonb");
         }
     }
 }

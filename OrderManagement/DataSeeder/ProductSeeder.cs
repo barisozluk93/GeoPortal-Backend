@@ -4,6 +4,7 @@ using OrderManagement.Entity;
 using OrderManagement.Helper;
 using System.Globalization;
 using System.Text;
+using System.Xml.Linq;
 
 namespace OrderManagement.Seed;
 
@@ -28,18 +29,37 @@ public static class ProductSeeder
             configuration["AppSettings:PublicBaseUrl"]?.TrimEnd('/')
             ?? "http://localhost:5065";
 
-        var counter = 0;
+        var addedCount = 0;
+        var updatedCount = 0;
+        var skippedCount = 0;
 
         foreach (var productDir in Directory.GetDirectories(dataRoot))
         {
-            var folderName = Path.GetFileName(productDir);
+            var imageDir = Path.Combine(productDir, "IMAGE");
+            var metadataPath = FindMetadataFile(imageDir);
+            var shpPath = FindShpFile(productDir);
 
-            if (string.IsNullOrWhiteSpace(folderName))
+            var meta = !string.IsNullOrWhiteSpace(metadataPath)
+                ? ReadMetadataKeyValues(metadataPath)
+                : new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+            var dbf = !string.IsNullOrWhiteSpace(shpPath)
+                ? DbfAttributeReader.ReadFirst(shpPath)
+                : new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+            var imageId = GetDbfAny(dbf, "IMAGEID", "IMAGE_ID");
+
+            if (string.IsNullOrWhiteSpace(imageId))
+            {
+                skippedCount++;
                 continue;
+            }
 
             var product = await db.Products
                 .Include(x => x.Classes)
-                .FirstOrDefaultAsync(x => x.ImageId == folderName && x.CategoryId == 1);
+                .FirstOrDefaultAsync(x =>
+                    x.ImageId == imageId &&
+                    x.CategoryId == 1);
 
             if (product == null)
             {
@@ -47,8 +67,8 @@ public static class ProductSeeder
 
                 product = new Product
                 {
-                    ImageId = folderName,
-                    Name = $"Uydu Görüntüsü - {folderName}",
+                    ImageId = imageId,
+                    Name = $"Uydu Görüntüsü - {imageId}",
                     Price = price,
                     PriceStr = $"₺{price}",
                     Currency = "TRY",
@@ -57,69 +77,82 @@ public static class ProductSeeder
                     IsInMarket = true,
                     IsCustomArea = false,
                     Description = "Seed edilmiş uydu görüntüsü",
-                    City = "Unknown",
-                    District = "Unknown",
-                    Provider = "Demo Dataset",
-                    SourceLabel = "Satellite Image",
-                    ImageType = ImageTypeMono,
-                    IsOrthorectified = true,
                     IsClassified = true,
                     Classes = GenerateRandomClasses()
                 };
 
-                db.Products.Add(product);
+                await db.Products.AddAsync(product);
+                addedCount++;
+            }
+            else
+            {
+                updatedCount++;
+
+                if (product.Classes == null || !product.Classes.Any())
+                    product.Classes = GenerateRandomClasses();
             }
 
-            SeedImageFiles(product, dataRoot, productDir, publicBaseUrl);
-            SeedGisFiles(product, productDir);
+            ApplyFiles(product, dataRoot, productDir, publicBaseUrl, metadataPath, shpPath);
+            ApplyDbfThenMetadata(product, dbf, meta);
+            product.IsNVDIAnalysis = DetectNdviAnalysis(productDir, dbf, meta);
+            ApplyGeometry(product, shpPath);
+
+            product.ImageId = imageId;
+            product.Name = BuildProductName(product, imageId);
 
             product.DownloadLink = !string.IsNullOrWhiteSpace(product.GeoTiffPath)
                 ? ToPublicFileUrl(dataRoot, product.GeoTiffPath, publicBaseUrl)
                 : ToPublicFileUrl(dataRoot, productDir, publicBaseUrl);
-
-            product.ImageType = NormalizeImageType(product.ImageType);
-            product.Name = BuildProductName(product, folderName);
-            product.IsOrthorectified ??= true;
-            product.IsClassified ??= true;
-            product.SourceLabel = FirstNotEmpty(product.SourceLabel, product.ProductType, product.SensorMode, "Satellite Image");
-            product.Provider = FirstNotEmpty(product.Provider, product.DataOwner, "Demo Dataset");
-            product.ImageId = FirstNotEmpty(product.ImageId, folderName);
-
-            counter++;
-
-            if (counter % 100 == 0)
-                await db.SaveChangesAsync();
         }
 
         await db.SaveChangesAsync();
+
+        Console.WriteLine($"ProductSeeder tamamlandı. Added: {addedCount}, Updated: {updatedCount}, Skipped: {skippedCount}");
     }
 
-    private static void SeedImageFiles(
+    private static void ApplyFiles(
         Product product,
         string dataRoot,
         string productDir,
-        string publicBaseUrl)
+        string publicBaseUrl,
+        string? metadataPath,
+        string? shpPath)
     {
         var imageDir = Path.Combine(productDir, "IMAGE");
+
+        product.FootprintPath = shpPath;
+        product.MetadataPath = metadataPath;
+
+        var dbfPath = !string.IsNullOrWhiteSpace(shpPath)
+            ? Path.ChangeExtension(shpPath, ".dbf")
+            : null;
+
+        product.PropertyUrl = !string.IsNullOrWhiteSpace(dbfPath) && File.Exists(dbfPath)
+            ? ToPublicFileUrl(dataRoot, dbfPath, publicBaseUrl)
+            : null;
+
+        product.MetadataUrl = !string.IsNullOrWhiteSpace(metadataPath)
+            ? ToPublicFileUrl(dataRoot, metadataPath, publicBaseUrl)
+            : null;
 
         if (Directory.Exists(imageDir))
         {
             product.GeoTiffPath = FindFirstByExtensions(
                 imageDir,
-                new[] { ".tif", ".tiff", ".geotiff" });
+                ".tif", ".tiff", ".geotiff");
 
-            product.MetadataPath = FindMetadataFile(imageDir);
+            var preview = FindPreviewFile(imageDir);
 
-            if (!string.IsNullOrWhiteSpace(product.MetadataPath))
+            if (!string.IsNullOrWhiteSpace(preview))
             {
-                ApplyMetadata(product, product.MetadataPath);
-                product.MetadataUrl = ToPublicFileUrl(dataRoot, product.MetadataPath, publicBaseUrl);
+                product.PreviewPath = preview;
+                product.PreviewUrl = ToPublicFileUrl(dataRoot, preview, publicBaseUrl);
             }
 
-            product.PreviewPath = FindPreviewFile(imageDir);
+            var thumbnail = FindThumbnailFile(imageDir);
 
-            if (!string.IsNullOrWhiteSpace(product.PreviewPath))
-                product.PreviewUrl = ToPublicFileUrl(dataRoot, product.PreviewPath, publicBaseUrl);
+            if (!string.IsNullOrWhiteSpace(thumbnail))
+                product.ThumbnailUrl = ToPublicFileUrl(dataRoot, thumbnail, publicBaseUrl);
         }
 
         var quicklook = FindQuicklookFile(productDir);
@@ -127,43 +160,174 @@ public static class ProductSeeder
         if (!string.IsNullOrWhiteSpace(quicklook))
         {
             product.QuicklookPath = quicklook;
-            product.ThumbnailUrl = ToPublicFileUrl(dataRoot, quicklook, publicBaseUrl);
-        }
-        else if (!string.IsNullOrWhiteSpace(product.PreviewUrl))
-        {
-            product.ThumbnailUrl = product.PreviewUrl;
-        }
 
-        product.City = FirstNotEmpty(product.City, "Unknown");
-        product.District = FirstNotEmpty(product.District, "Unknown");
-        product.Provider = FirstNotEmpty(product.Provider, "Demo Dataset");
-        product.SourceLabel = FirstNotEmpty(product.SourceLabel, "Satellite Image");
-        product.ImageType = NormalizeImageType(product.ImageType);
+            // Preview yoksa Quicklook'u kullan
+            if (string.IsNullOrWhiteSpace(product.PreviewPath))
+                product.PreviewPath = quicklook;
+
+            if (string.IsNullOrWhiteSpace(product.PreviewUrl))
+                product.PreviewUrl = ToPublicFileUrl(dataRoot, quicklook, publicBaseUrl);
+        }
     }
 
-    private static void SeedGisFiles(Product product, string productDir)
+    private static void ApplyDbfThenMetadata(
+        Product product,
+        IReadOnlyDictionary<string, string?> dbf,
+        IReadOnlyDictionary<string, string?> meta)
     {
-        var gisDir = Path.Combine(productDir, "GIS_FILES");
+        product.OrderId = FirstNotEmpty(
+            GetDbfAny(dbf, "ORDER_ID", "ORDERID"),
+            GetMetaAny(meta, "productOrderId", "orderId", "sceneID", "sceneId"),
+            product.OrderId);
 
-        if (!Directory.Exists(gisDir))
+        product.CatalogId = FirstNotEmpty(
+            GetDbfAny(dbf, "CATALOGID", "CATALOG_ID"),
+            GetMetaAny(meta, "productCatalogId", "CatId", "catalogId", "productID", "productId"),
+            product.CatalogId);
+
+        product.ImageDescriptor = FirstNotEmpty(
+            GetDbfAny(dbf, "IMAGE_DESC", "IMAGEDESC"),
+            GetMetaAny(meta, "imageDescriptor", "imageName"),
+            product.ImageDescriptor);
+
+        product.Satellite = FirstNotEmpty(
+            GetDbfAny(dbf, "PLATFORM", "SATELLITE", "SOURCE"),
+            GetMetaAny(meta, "satelliteID", "satelliteId", "satId", "satellite"),
+            product.Satellite);
+
+        product.Sensor = FirstNotEmpty(
+            GetDbfAny(dbf, "SENSOR", "SENS_MODE", "SENSORID"),
+            GetMetaAny(meta, "sensorID", "sensorId", "sensor"),
+            product.Sensor);
+
+        product.ImageType = NormalizeImageType(FirstNotEmpty(
+            GetDbfAny(dbf, "IMAGETYPE", "IMAGE_TYPE"),
+            product.ImageType));
+
+        product.SensorMode = FirstNotEmpty(
+            GetDbfAny(dbf, "SENSOR_MODE", "SENS_MODE"),
+            GetMetaAny(meta, "instrumentMode", "mode", "sensorMode"),
+            product.SensorMode);
+
+        product.BandId = FirstNotEmpty(
+            GetDbfAny(dbf, "BANDS", "BANDID", "BAND_ID"),
+            GetMetaAny(meta, "bands", "bandId"),
+            product.BandId);
+
+        product.ProductType = FirstNotEmpty(
+            GetDbfAny(dbf, "PRODUCTTYPE", "PRODUCT_TYPE"),
+            GetMetaAny(meta, "productType"),
+            product.ProductType);
+
+        product.ProductLevel = FirstNotEmpty(
+            GetDbfAny(dbf, "PRODUCTLEVEL", "PRODUCT_LEVEL"),
+            GetMetaAny(meta, "productLevel"),
+            product.ProductLevel);
+
+        product.ProcessingLevel = FirstNotEmpty(
+            product.ProductLevel,
+            product.ProcessingLevel);
+
+        product.RadiometricLevel = FirstNotEmpty(
+            GetDbfAny(dbf, "RADIOMETRIC", "RADIOMETRIC_LEVEL"),
+            GetMetaAny(meta, "radiometricLevel"),
+            product.RadiometricLevel);
+
+        product.OutputFormat = FirstNotEmpty(
+            GetDbfAny(dbf, "OUTPUTFORMAT", "OUTPUT_FORMAT", "FORMAT"),
+            GetMetaAny(meta, "PgProductFormat", "outputFormat"),
+            product.OutputFormat);
+
+        product.SpatialReference = FirstNotEmpty(
+            GetDbfAny(dbf, "SPATIALREF", "SPATIAL_REF", "SRS"),
+            BuildSpatialReferenceFromMeta(meta),
+            product.SpatialReference);
+
+        product.ScanDirection = FirstNotEmpty(
+            GetDbfAny(dbf, "DIRECTION", "SCAN_DIR"),
+            GetMetaAny(meta, "direction", "scanDirection"),
+            product.ScanDirection);
+
+        product.StripId = FirstNotEmpty(
+            GetDbfAny(dbf, "STRIP_ID", "STRIPID"),
+            GetMetaAny(meta, "orbitID", "RawdataID"),
+            product.StripId);
+
+        product.DataOwner = FirstNotEmpty(
+            GetDbfAny(dbf, "DATA_OWNER", "OWNER"),
+            GetMetaAny(meta, "dataOwner", "owner"),
+            product.DataOwner);
+
+        product.Provider = FirstNotEmpty(
+            GetDbfAny(dbf, "PROVIDER", "VENDOR", "DATA_OWNER", "OWNER", "COMPANY", "AGENCY", "SUPPLIER"),
+            GetMetaAny(meta, "provider", "vendor", "dataOwner", "owner", "company", "agency", "supplier"),
+            product.Provider);
+
+        product.AcquisitionDate = FirstDate(
+            ParseDate(GetDbfAny(dbf, "COLL_DATE", "ACQ_DATE", "ACQUISITION_DATE")),
+            ParseDate(GetMetaAny(meta, "Scene_imagingStartTime", "productDate", "generationTime", "acquisitionDate")),
+            product.AcquisitionDate);
+
+        product.AcquisitionStartDate = FirstDate(
+            ParseDate(GetDbfAny(dbf, "COLL_DATE", "ACQ_DATE", "ACQUISITION_DATE")),
+            ParseDate(GetMetaAny(meta, "Scene_imagingStartTime", "earliestAcqTime", "firstLineTime", "acquisitionStartDate")),
+            product.AcquisitionStartDate);
+
+        product.AcquisitionEndDate = FirstDate(
+            ParseDate(GetMetaAny(meta, "Scene_imagingStopTime", "latestAcqTime", "acquisitionEndDate")),
+            product.AcquisitionEndDate);
+
+        product.Resolution = FirstDecimal(
+            ParseDecimal(GetDbfAny(dbf, "GSD", "RESOLUTION")),
+            ParseDecimal(GetMetaAny(meta, "sensorGSD", "productGSD", "meanCollectedGSD", "PixelSpacing", "resolution")),
+            product.Resolution);
+
+        product.CloudRate = FirstDecimal(
+            ParseDecimal(GetDbfAny(dbf, "CLOUDRATE", "CLOUDS", "CLOUD_COVER")),
+            ParseDecimal(GetMetaAny(meta, "cloudCover", "cloudCoverQuote", "cloudRate")),
+            product.CloudRate);
+
+        product.OffNadirAngle = FirstDecimal(
+            ParseDecimal(GetDbfAny(dbf, "AVRNADIR", "AVR_NADIR", "NADIR_ANGL", "OFFNADIR")),
+            ParseDecimal(GetMetaAny(meta, "satOffNadir", "meanOffNadirViewAngle", "offNadirAngle")),
+            product.OffNadirAngle);
+
+        product.SunAzimuth = FirstDecimal(
+            ParseDecimal(GetDbfAny(dbf, "AVRSUNAZM", "AVRSUNAZIMUTH", "SUN_AZIMUTH", "SUN_ANGLE", "AZIM_ANGLE")),
+            ParseDecimal(GetMetaAny(meta, "sunAzimuth", "meanSunAz", "maxSunAz", "minSunAz")),
+            product.SunAzimuth);
+
+        product.SunElevation = FirstDecimal(
+            ParseDecimal(GetDbfAny(dbf, "AVRSUNELEV", "AVRSUNELE", "AVRSUNELEVATION", "SUN_ELEVATION", "SUN_ELEV")),
+            ParseDecimal(GetMetaAny(meta, "sunElevation", "meanSunEl", "maxSunEl", "minSunEl")),
+            product.SunElevation);
+
+        product.IsPansharpened = FirstBool(
+            HasPanSharpen(GetMetaAny(meta, "FusionMethod", "panSharpenAlgorithm")),
+            product.IsPansharpened);
+
+        product.IsOrthorectified = FirstBool(
+            IsOrthorectifiedLevel(product.ProductLevel),
+            product.IsOrthorectified);
+
+        product.SourceLabel = FirstNotEmpty(
+            product.ProductType,
+            product.Sensor,
+            product.Satellite,
+            product.SourceLabel);
+
+        product.Provider = NullIfEmpty(product.Provider);
+        product.DataOwner = NullIfEmpty(product.DataOwner);
+        product.City = NullIfEmpty(product.City);
+        product.District = NullIfEmpty(product.District);
+    }
+
+    private static void ApplyGeometry(Product product, string? shpPath)
+    {
+        if (string.IsNullOrWhiteSpace(shpPath) || !File.Exists(shpPath))
             return;
 
-        var shp = Directory
-            .GetFiles(gisDir, "*.shp", SearchOption.AllDirectories)
-            .FirstOrDefault();
-
-        product.FootprintPath = shp;
-
-        if (!string.IsNullOrWhiteSpace(shp))
-        {
-            var attributes = DbfAttributeReader.ReadFirst(shp);
-            ApplyDbfAttributes(product, attributes);
-        }
-
-        if (string.IsNullOrWhiteSpace(shp))
-            return;
-
-        var geom = ShapeReader.Read(shp);
+        var geom = ShapeReader.Read(shpPath);
 
         if (geom == null || geom.IsEmpty)
             return;
@@ -183,193 +347,63 @@ public static class ProductSeeder
         product.AreaKm2 = Math.Round(
             (decimal)(widthKm * heightKm),
             2,
-            MidpointRounding.AwayFromZero
-        );
-    }
-
-    private static void ApplyDbfAttributes(Product product, IReadOnlyDictionary<string, string?> dbf)
-    {
-        if (dbf.Count == 0)
-            return;
-
-        product.ImageId = FirstNotEmpty(GetDbf(dbf, "IMAGE_ID"), product.ImageId);
-        product.OrderId = FirstNotEmpty(GetDbf(dbf, "ORDER_ID"), product.OrderId);
-        product.Satellite = FirstNotEmpty(GetDbf(dbf, "SOURCE"), product.Satellite);
-        product.Sensor = FirstNotEmpty(GetDbf(dbf, "SENS_MODE"), product.Sensor);
-        product.SensorMode = FirstNotEmpty(GetDbf(dbf, "SENS_MODE"), product.SensorMode);
-        product.StripId = FirstNotEmpty(GetDbf(dbf, "STRIP_ID"), product.StripId);
-        product.SpatialReference = FirstNotEmpty(GetDbf(dbf, "SPATIALREF"), product.SpatialReference);
-        product.DataOwner = FirstNotEmpty(GetDbf(dbf, "DATA_OWNER"), product.DataOwner);
-        product.Provider = FirstNotEmpty(GetDbf(dbf, "DATA_OWNER"), product.Provider);
-
-        product.AcquisitionDate = FirstDate(
-            ParseDate(GetDbf(dbf, "COLL_DATE")),
-            product.AcquisitionDate);
-
-        product.Resolution = FirstDecimal(
-            ParseDecimal(GetDbf(dbf, "GSD")),
-            product.Resolution);
-
-        product.CloudRate = FirstDecimal(
-            ParseDecimal(GetDbf(dbf, "CLOUDS")),
-            product.CloudRate);
-
-        product.SunAzimuth = FirstDecimal(
-            ParseDecimal(GetDbf(dbf, "SUN_ANGLE")),
-            ParseDecimal(GetDbf(dbf, "AZIM_ANGLE")),
-            product.SunAzimuth);
-
-        product.SunElevation = FirstDecimal(
-            ParseDecimal(GetDbf(dbf, "SUN_ELEV")),
-            product.SunElevation);
-
-        product.OffNadirAngle = FirstDecimal(
-            ParseDecimal(GetDbf(dbf, "NADIR_ANGL")),
-            product.OffNadirAngle);
-
-        product.MetadataUrl = FirstNotEmpty(GetDbf(dbf, "METADATA"), product.MetadataUrl);
-        product.PreviewUrl = FirstNotEmpty(GetDbf(dbf, "PREVIEW"), product.PreviewUrl);
-        product.SourceLabel = FirstNotEmpty(product.SensorMode, product.SourceLabel, "Satellite Image");
-
-        product.ImageType = NormalizeImageType(product.ImageType);
-    }
-
-    private static void ApplyMetadata(Product product, string metadataPath)
-    {
-        var values = ReadMetadataKeyValues(metadataPath);
-
-        product.OrderId = FirstNotEmpty(GetMeta(values, "productOrderId"), product.OrderId);
-        product.CatalogId = FirstNotEmpty(GetMeta(values, "productCatalogId"), GetMeta(values, "CatId"), product.CatalogId);
-        product.ImageDescriptor = FirstNotEmpty(GetMeta(values, "imageDescriptor"), product.ImageDescriptor);
-
-        // KRİTİK: ImageType burada SADECE Mono veya Stereo atanır.
-        // productType/mode/bandId ASLA ImageType'a yazılmaz.
-        product.ImageType = ResolveMonoStereoImageType(metadataPath);
-
-        product.SensorMode = FirstNotEmpty(product.SensorMode, GetMeta(values, "mode"));
-        product.BandId = FirstNotEmpty(GetMeta(values, "bandId"), product.BandId);
-        product.ProductType = FirstNotEmpty(GetMeta(values, "productType"), product.ProductType);
-        product.ProductLevel = FirstNotEmpty(GetMeta(values, "productLevel"), product.ProductLevel);
-        product.ProcessingLevel = FirstNotEmpty(product.ProcessingLevel, product.ProductLevel);
-        product.RadiometricLevel = FirstNotEmpty(GetMeta(values, "radiometricLevel"), product.RadiometricLevel);
-        product.OutputFormat = FirstNotEmpty(GetMeta(values, "outputFormat"), product.OutputFormat);
-        product.Satellite = FirstNotEmpty(product.Satellite, GetMeta(values, "satId"), product.ImageDescriptor);
-        product.Sensor = FirstNotEmpty(product.Sensor, product.SensorMode, GetMeta(values, "mode"));
-        product.ScanDirection = FirstNotEmpty(GetMeta(values, "scanDirection"), product.ScanDirection);
-
-        product.AcquisitionStartDate = FirstDate(
-            product.AcquisitionStartDate,
-            ParseDate(GetMeta(values, "earliestAcqTime")),
-            ParseDate(GetMeta(values, "firstLineTime")));
-
-        product.AcquisitionEndDate = FirstDate(
-            product.AcquisitionEndDate,
-            ParseDate(GetMeta(values, "latestAcqTime")),
-            product.AcquisitionStartDate);
-
-        product.AcquisitionDate = FirstDate(
-            product.AcquisitionDate,
-            product.AcquisitionStartDate,
-            ParseDate(GetMeta(values, "generationTime")));
-
-        product.Resolution = FirstDecimal(
-            product.Resolution,
-            ParseDecimal(GetMeta(values, "productGSD")),
-            ParseDecimal(GetMeta(values, "meanCollectedGSD")),
-            ParseDecimal(GetMeta(values, "meanCollectedRowGSD")),
-            ParseDecimal(GetMeta(values, "colSpacing")),
-            ParseDecimal(GetMeta(values, "rowSpacing")));
-
-        product.CloudRate = FirstDecimal(
-            product.CloudRate,
-            ParseDecimal(GetMeta(values, "cloudCover")));
-
-        product.SunElevation = FirstDecimal(
-            product.SunElevation,
-            ParseDecimal(GetMeta(values, "meanSunEl")),
-            ParseDecimal(GetMeta(values, "maxSunEl")),
-            ParseDecimal(GetMeta(values, "minSunEl")));
-
-        product.SunAzimuth = FirstDecimal(
-            product.SunAzimuth,
-            ParseDecimal(GetMeta(values, "meanSunAz")),
-            ParseDecimal(GetMeta(values, "maxSunAz")),
-            ParseDecimal(GetMeta(values, "minSunAz")));
-
-        product.OffNadirAngle = FirstDecimal(
-            product.OffNadirAngle,
-            ParseDecimal(GetMeta(values, "meanOffNadirViewAngle")),
-            ParseDecimal(GetMeta(values, "maxOffNadirViewAngle")),
-            ParseDecimal(GetMeta(values, "minOffNadirViewAngle")));
-
-        product.IsPansharpened = FirstBool(
-            product.IsPansharpened,
-            HasPanSharpen(GetMeta(values, "panSharpenAlgorithm")));
-
-        product.IsOrthorectified = FirstBool(
-            product.IsOrthorectified,
-            IsOrthorectifiedLevel(product.ProductLevel));
-
-        product.SourceLabel = FirstNotEmpty(
-            product.SourceLabel,
-            product.ProductType,
-            product.SensorMode,
-            "Satellite Image");
-
-        product.ImageType = NormalizeImageType(product.ImageType);
-    }
-
-    private static string ResolveMonoStereoImageType(string metadataPath)
-    {
-        if (string.IsNullOrWhiteSpace(metadataPath) || !File.Exists(metadataPath))
-            return ImageTypeMono;
-
-        var text = File.ReadAllText(metadataPath);
-
-        if (string.IsNullOrWhiteSpace(text))
-            return ImageTypeMono;
-
-        var normalized = text.ToLowerInvariant();
-
-        var hasImage1 =
-            normalized.Contains("begin_group = image_1") ||
-            normalized.Contains("begin_group=image_1");
-
-        var hasImage2 =
-            normalized.Contains("begin_group = image_2") ||
-            normalized.Contains("begin_group=image_2");
-
-        if (hasImage1 && hasImage2)
-            return ImageTypeStereo;
-
-        if (normalized.Contains("tri-stereo") ||
-            normalized.Contains("tristereo") ||
-            normalized.Contains("along-track") ||
-            normalized.Contains("multi-view") ||
-            normalized.Contains("multiview") ||
-            normalized.Contains("stereo"))
-        {
-            return ImageTypeStereo;
-        }
-
-        return ImageTypeMono;
-    }
-
-    private static string NormalizeImageType(string? imageType)
-    {
-        if (string.IsNullOrWhiteSpace(imageType))
-            return ImageTypeMono;
-
-        if (imageType.Equals(ImageTypeStereo, StringComparison.OrdinalIgnoreCase))
-            return ImageTypeStereo;
-
-        if (imageType.Equals(ImageTypeMono, StringComparison.OrdinalIgnoreCase))
-            return ImageTypeMono;
-
-        return ImageTypeMono;
+            MidpointRounding.AwayFromZero);
     }
 
     private static Dictionary<string, string?> ReadMetadataKeyValues(string metadataPath)
+    {
+        if (metadataPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+            return ReadXmlMetadataKeyValues(metadataPath);
+
+        return ReadTextMetadataKeyValues(metadataPath);
+    }
+
+    private static Dictionary<string, string?> ReadXmlMetadataKeyValues(string metadataPath)
+    {
+        var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            var doc = XDocument.Load(metadataPath);
+
+            foreach (var element in doc.Descendants())
+            {
+                if (!element.HasElements)
+                {
+                    var key = element.Name.LocalName.Trim();
+                    var value = element.Value?.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(key) &&
+                        !string.IsNullOrWhiteSpace(value) &&
+                        !result.ContainsKey(key))
+                    {
+                        result[key] = value;
+                    }
+                }
+
+                foreach (var attr in element.Attributes())
+                {
+                    var key = attr.Name.LocalName.Trim();
+                    var value = attr.Value?.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(key) &&
+                        !string.IsNullOrWhiteSpace(value) &&
+                        !result.ContainsKey(key))
+                    {
+                        result[key] = value;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            return ReadTextMetadataKeyValues(metadataPath);
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, string?> ReadTextMetadataKeyValues(string metadataPath)
     {
         var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -400,38 +434,116 @@ public static class ProductSeeder
         return result;
     }
 
+    private static string? BuildSpatialReferenceFromMeta(IReadOnlyDictionary<string, string?> meta)
+    {
+        var earthModel = GetMetaAny(meta, "earthModel");
+        var projection = GetMetaAny(meta, "mapProjection");
+        var zone = GetMetaAny(meta, "Zone_Number");
+
+        var parts = new[] { earthModel, projection, zone }
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(" / ", parts);
+    }
+
+    private static string NormalizeImageType(string? imageType)
+    {
+        if (string.IsNullOrWhiteSpace(imageType))
+            return ImageTypeMono;
+
+        if (imageType.Equals(ImageTypeStereo, StringComparison.OrdinalIgnoreCase))
+            return ImageTypeStereo;
+
+        if (imageType.Equals(ImageTypeMono, StringComparison.OrdinalIgnoreCase))
+            return ImageTypeMono;
+
+        if (imageType.Contains("stereo", StringComparison.OrdinalIgnoreCase))
+            return ImageTypeStereo;
+
+        return imageType.Trim();
+    }
+
     private static string? FindMetadataFile(string imageDir)
     {
+        if (string.IsNullOrWhiteSpace(imageDir) || !Directory.Exists(imageDir))
+            return null;
+
+        var files = Directory.GetFiles(imageDir, "*.*", SearchOption.AllDirectories);
+
+        return files.FirstOrDefault(x =>
+                   x.Contains("metadata", StringComparison.OrdinalIgnoreCase) &&
+                   IsMetadataFile(x))
+               ?? files.FirstOrDefault(x =>
+                   x.Contains("_MTL", StringComparison.OrdinalIgnoreCase) &&
+                   IsMetadataFile(x))
+               ?? files.FirstOrDefault(x => x.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+               ?? files.FirstOrDefault(x => x.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+               ?? files.FirstOrDefault(x => x.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string? FindShpFile(string productDir)
+    {
+        var gisDir = Path.Combine(productDir, "GIS_FILES");
+
+        if (!Directory.Exists(gisDir))
+            return null;
+
         return Directory
-            .GetFiles(imageDir, "*.*", SearchOption.AllDirectories)
-            .FirstOrDefault(x =>
-                x.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) &&
-                x.Contains("_MTL", StringComparison.OrdinalIgnoreCase))
-            ?? Directory
-                .GetFiles(imageDir, "*.txt", SearchOption.AllDirectories)
-                .FirstOrDefault();
+            .GetFiles(gisDir, "*.shp", SearchOption.AllDirectories)
+            .FirstOrDefault();
     }
 
     private static string? FindPreviewFile(string imageDir)
     {
-        return Directory
-            .GetFiles(imageDir, "*.*", SearchOption.AllDirectories)
-            .FirstOrDefault(x =>
-                x.Contains("PREVIEW", StringComparison.OrdinalIgnoreCase) &&
-                IsImageFile(x));
+        if (!Directory.Exists(imageDir))
+            return null;
+
+        var files = Directory.GetFiles(imageDir, "*.*", SearchOption.AllDirectories);
+
+        return files.FirstOrDefault(x =>
+                   x.Contains("PREVIEW", StringComparison.OrdinalIgnoreCase) &&
+                   IsImageFile(x))
+               ?? files.FirstOrDefault(x =>
+                   x.Contains("BROWSE", StringComparison.OrdinalIgnoreCase) &&
+                   IsImageFile(x));
+    }
+
+    private static string? FindThumbnailFile(string imageDir)
+    {
+        if (!Directory.Exists(imageDir))
+            return null;
+
+        var files = Directory.GetFiles(imageDir, "*.*", SearchOption.AllDirectories);
+
+        return files.FirstOrDefault(x =>
+                   x.Contains("THUMBNAIL", StringComparison.OrdinalIgnoreCase) &&
+                   IsImageFile(x))
+               ?? files.FirstOrDefault(x =>
+                   x.Contains("THUMB", StringComparison.OrdinalIgnoreCase) &&
+                   IsImageFile(x));
     }
 
     private static string? FindQuicklookFile(string productDir)
     {
-        return Directory
-            .GetFiles(productDir, "*.*", SearchOption.AllDirectories)
-            .FirstOrDefault(x =>
-                x.Contains("QUICKLOOK", StringComparison.OrdinalIgnoreCase) &&
-                IsImageFile(x));
+        if (!Directory.Exists(productDir))
+            return null;
+
+        var files = Directory.GetFiles(productDir, "*.*", SearchOption.AllDirectories);
+
+        return files.FirstOrDefault(x =>
+                   x.Contains("QUICKLOOK", StringComparison.OrdinalIgnoreCase) &&
+                   IsImageFile(x))
+               ?? files.FirstOrDefault(x =>
+                   x.Contains("QL", StringComparison.OrdinalIgnoreCase) &&
+                   IsImageFile(x));
     }
 
-    private static string? FindFirstByExtensions(string root, string[] extensions)
+    private static string? FindFirstByExtensions(string root, params string[] extensions)
     {
+        if (!Directory.Exists(root))
+            return null;
+
         return Directory
             .GetFiles(root, "*.*", SearchOption.AllDirectories)
             .FirstOrDefault(x =>
@@ -439,11 +551,20 @@ public static class ProductSeeder
                     x.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
     }
 
+    private static bool IsMetadataFile(string path)
+    {
+        return path.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsImageFile(string path)
     {
         return path.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
             || path.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
-            || path.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+            || path.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith(".tif", StringComparison.OrdinalIgnoreCase)
+            || path.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ToPublicFileUrl(
@@ -462,24 +583,45 @@ public static class ProductSeeder
         return $"{publicBaseUrl}/files/{encodedPath}";
     }
 
-    private static string BuildProductName(Product product, string fallbackFolderName)
+    private static string BuildProductName(Product product, string imageId)
     {
-        var imageId = FirstNotEmpty(product.ImageId, fallbackFolderName) ?? fallbackFolderName;
-        var type = FirstNotEmpty(product.ProductType, product.SensorMode);
+        var type = FirstNotEmpty(product.ProductType, product.SensorMode, product.Sensor);
 
         return string.IsNullOrWhiteSpace(type)
             ? $"Uydu Görüntüsü - {imageId}"
             : $"Uydu Görüntüsü - {imageId} ({type})";
     }
 
-    private static string? GetDbf(IReadOnlyDictionary<string, string?> dbf, string key)
+    private static string? GetMetaAny(
+        IReadOnlyDictionary<string, string?> meta,
+        params string[] keys)
     {
-        return dbf.TryGetValue(key, out var value) ? value : null;
+        foreach (var key in keys)
+        {
+            if (meta.TryGetValue(key, out var value) &&
+                !string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
-    private static string? GetMeta(IReadOnlyDictionary<string, string?> meta, string key)
+    private static string? GetDbfAny(
+        IReadOnlyDictionary<string, string?> dbf,
+        params string[] keys)
     {
-        return meta.TryGetValue(key, out var value) ? value : null;
+        foreach (var key in keys)
+        {
+            if (dbf.TryGetValue(key, out var value) &&
+                !string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
     private static string? FirstNotEmpty(params string?[] values)
@@ -502,6 +644,11 @@ public static class ProductSeeder
         return values.FirstOrDefault(x => x.HasValue);
     }
 
+    private static string? NullIfEmpty(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
     private static decimal? ParseDecimal(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -521,12 +668,107 @@ public static class ProductSeeder
 
         value = value.Trim().TrimEnd(';');
 
-        if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dto))
+        var formats = new[]
+        {
+            "yyyy MM dd HH:mm:ss",
+            "yyyy MM dd HH:mm:ss.FFFFFF",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-ddTHH:mm:ss",
+            "yyyy-MM-ddTHH:mm:ssZ"
+        };
+
+        if (DateTime.TryParseExact(
+                value,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal,
+                out var exact))
+            return exact;
+
+        if (DateTimeOffset.TryParse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal,
+                out var dto))
             return dto.UtcDateTime;
 
-        return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dt)
+        return DateTime.TryParse(
+            value,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal,
+            out var dt)
             ? dt
             : null;
+    }
+
+    private static bool DetectNdviAnalysis(
+        string productDir,
+        IReadOnlyDictionary<string, string?> dbf,
+        IReadOnlyDictionary<string, string?> meta)
+    {
+        var explicitValue = FirstNotEmpty(
+            GetDbfAny(dbf,
+                "IS_NDVI", "ISNDVI", "NDVI", "NDVI_DONE", "NDVI_ANALYSIS",
+                "IS_NVDI", "ISNVDI", "NVDI", "NVDI_DONE", "NVDI_ANALYSIS"),
+            GetMetaAny(meta,
+                "isNdvi", "isNDVI", "ndvi", "ndviDone", "ndviAnalysis", "hasNdvi",
+                "isNvdi", "isNVDI", "nvdi", "nvdiDone", "nvdiAnalysis", "hasNvdi"));
+
+        var parsedExplicitValue = ParseAnalysisBool(explicitValue);
+
+        if (parsedExplicitValue.HasValue)
+            return parsedExplicitValue.Value;
+
+        if (ContainsNdviMarker(productDir))
+            return true;
+
+        if (Directory.Exists(productDir))
+        {
+            try
+            {
+                if (Directory.EnumerateFileSystemEntries(productDir, "*", SearchOption.AllDirectories)
+                    .Any(ContainsNdviMarker))
+                {
+                    return true;
+                }
+            }
+            catch (IOException)
+            {
+                // Erişilemeyen tekil dosya/klasörler seed işlemini durdurmasın.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Erişilemeyen tekil dosya/klasörler seed işlemini durdurmasın.
+            }
+        }
+
+        return dbf.Any(x => ContainsNdviMarker(x.Key) || ContainsNdviMarker(x.Value))
+            || meta.Any(x => ContainsNdviMarker(x.Key) || ContainsNdviMarker(x.Value));
+    }
+
+    private static bool ContainsNdviMarker(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        return value.Contains("NDVI", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("NVDI", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool? ParseAnalysisBool(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var normalized = value.Trim().ToLowerInvariant();
+
+        if (normalized is "1" or "true" or "yes" or "y" or "evet" or "var" or "done" or "completed" or "complete")
+            return true;
+
+        if (normalized is "0" or "false" or "no" or "n" or "hayır" or "hayir" or "yok" or "not done" or "not_done" or "none")
+            return false;
+
+        return ContainsNdviMarker(normalized) ? true : null;
     }
 
     private static bool? HasPanSharpen(string? value)
@@ -534,9 +776,9 @@ public static class ProductSeeder
         if (string.IsNullOrWhiteSpace(value))
             return null;
 
-        return !value.Equals("NONE", StringComparison.OrdinalIgnoreCase)
-            && !value.Equals("OFF", StringComparison.OrdinalIgnoreCase)
-            && !value.Equals("N/A", StringComparison.OrdinalIgnoreCase);
+        return value.Contains("pan", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("fusion", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("pansharpen", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool? IsOrthorectifiedLevel(string? productLevel)
@@ -545,7 +787,8 @@ public static class ProductSeeder
             return null;
 
         return productLevel.Contains("2A", StringComparison.OrdinalIgnoreCase)
-            || productLevel.Contains("ORTHO", StringComparison.OrdinalIgnoreCase);
+            || productLevel.Contains("ORTHO", StringComparison.OrdinalIgnoreCase)
+            || productLevel.Contains("LEVEL2", StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task SeedApiKeyAsync(OrderManagementContext db)
@@ -628,9 +871,11 @@ internal static class DbfAttributeReader
 
         reader.ReadByte();
         reader.ReadBytes(3);
+
         var recordCount = reader.ReadInt32();
         var headerLength = reader.ReadInt16();
         var recordLength = reader.ReadInt16();
+
         reader.ReadBytes(20);
 
         if (recordCount <= 0 || headerLength <= 32 || recordLength <= 1)
@@ -651,9 +896,12 @@ internal static class DbfAttributeReader
 
             var name = Encoding.ASCII.GetString(nameBytes).TrimEnd('\0', ' ');
             var type = (char)reader.ReadByte();
+
             reader.ReadBytes(4);
+
             var length = reader.ReadByte();
             var decimalCount = reader.ReadByte();
+
             reader.ReadBytes(14);
 
             if (!string.IsNullOrWhiteSpace(name))
@@ -661,6 +909,7 @@ internal static class DbfAttributeReader
         }
 
         stream.Position = headerLength;
+
         var recordBytes = reader.ReadBytes(recordLength);
 
         if (recordBytes.Length != recordLength || recordBytes[0] == '*')
@@ -674,12 +923,15 @@ internal static class DbfAttributeReader
             if (offset + field.Length > recordBytes.Length)
                 break;
 
-            var value = Encoding.UTF8.GetString(recordBytes, offset, field.Length).Trim('\0', ' ');
+            var raw = recordBytes.Skip(offset).Take(field.Length).ToArray();
+
+            var value = Encoding.UTF8.GetString(raw).Trim('\0', ' ');
 
             if (string.IsNullOrWhiteSpace(value))
-                value = Encoding.Default.GetString(recordBytes, offset, field.Length).Trim('\0', ' ');
+                value = Encoding.Default.GetString(raw).Trim('\0', ' ');
 
             result[field.Name] = string.IsNullOrWhiteSpace(value) ? null : value;
+
             offset += field.Length;
         }
 

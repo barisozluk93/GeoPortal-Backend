@@ -42,9 +42,6 @@ namespace MapManagement.Migrations
                     b.Property<bool>("IsVisible")
                         .HasColumnType("boolean");
 
-                    b.Property<long>("LayerGroupId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("LayerName")
                         .HasColumnType("text");
 
@@ -70,72 +67,47 @@ namespace MapManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LayerGroupId");
-
                     b.ToTable("Layers");
 
                     b.HasData(
                         new
                         {
                             Id = 1L,
-                            CreatedAt = new DateTime(2026, 4, 18, 13, 22, 52, 962, DateTimeKind.Utc).AddTicks(6817),
+                            CreatedAt = new DateTime(2026, 7, 15, 17, 3, 31, 987, DateTimeKind.Utc).AddTicks(7667),
+                            Format = "image/png",
                             IsDeleted = false,
                             IsVisible = true,
-                            LayerGroupId = 1L,
-                            Name = "OSM Standart",
+                            LayerName = "Maps:blue_marble",
+                            Name = "Blue Marbel",
                             Opacity = 1.0,
                             OrderNo = 1,
-                            Type = 1,
-                            Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        });
-                });
-
-            modelBuilder.Entity("MapManagement.Entity.LayerGroup", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("OrderNo")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LayerGroups");
-
-                    b.HasData(
+                            Type = 2,
+                            Url = "https://taiearth.com/geoserver/Maps/wms"
+                        },
                         new
                         {
-                            Id = 1L,
+                            Id = 2L,
+                            CreatedAt = new DateTime(2026, 7, 15, 17, 3, 31, 987, DateTimeKind.Utc).AddTicks(7676),
                             IsDeleted = false,
-                            Name = "Altlık Haritalar",
-                            OrderNo = 1
+                            IsVisible = false,
+                            Name = "OSM Standart",
+                            Opacity = 1.0,
+                            OrderNo = 2,
+                            Type = 1,
+                            Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreatedAt = new DateTime(2026, 7, 15, 17, 3, 31, 987, DateTimeKind.Utc).AddTicks(7677),
+                            IsDeleted = false,
+                            IsVisible = false,
+                            Name = "Topografik Harita",
+                            Opacity = 1.0,
+                            OrderNo = 3,
+                            Type = 1,
+                            Url = "https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png"
                         });
-                });
-
-            modelBuilder.Entity("MapManagement.Entity.Layer", b =>
-                {
-                    b.HasOne("MapManagement.Entity.LayerGroup", "LayerGroup")
-                        .WithMany("Layers")
-                        .HasForeignKey("LayerGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("LayerGroup");
-                });
-
-            modelBuilder.Entity("MapManagement.Entity.LayerGroup", b =>
-                {
-                    b.Navigation("Layers");
                 });
 #pragma warning restore 612, 618
         }

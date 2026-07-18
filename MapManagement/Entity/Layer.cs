@@ -20,11 +20,6 @@ namespace MapManagement.Entity
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public long LayerGroupId { get; set; }
-
-        [ForeignKey("LayerGroupId")]
-        public LayerGroup? LayerGroup { get; set; }
-
         public bool IsDeleted { get; set; }
 
     }

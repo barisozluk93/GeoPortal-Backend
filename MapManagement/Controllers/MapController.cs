@@ -22,78 +22,9 @@ namespace FileManagement.Controllers
 
         [HttpGet("LayerList")]
         [AllowAnonymous]
-        public async Task<IActionResult> ListLayerGroup()
+        public async Task<IActionResult> ListLayers()
         {
-            var result = await _mapService.ListLayerGroup();
-            return new OkObjectResult(result);
-        }
-
-        [HttpGet("GetLayerGroups")]
-        [Authorize]
-        [HasPermission("LayerGroupScene.All.Permission")]
-        public async Task<IActionResult> GetLayerGroups()
-        {
-            var result = await _mapService.GetLayerGroups();
-            return new OkObjectResult(result);
-        }
-
-
-        [HttpGet("PaginateLayerGroup")]
-        [Authorize]
-        [HasPermission("LayerGroupScene.Paging.Permission")]
-        public async Task<IActionResult> PaginateLayerGroup([FromQuery] PagingParameter pagingParameter, [FromQuery] bool? isDeleted, [FromQuery] string? name, [FromQuery] long? orderNo)
-        {
-            var result = await _mapService.PaginateLayerGroup(pagingParameter, isDeleted, name, orderNo);
-            return new OkObjectResult(result);
-        }
-
-        [HttpPost("SaveLayerGroup")]
-        [Authorize]
-        [HasPermission("LayerGroupScene.Save.Permission")]
-        public async Task<IActionResult> SaveLayerGroup([FromBody] LayerGroup layerGroup)
-        {
-            var result = await _mapService.SaveLayerGroup(layerGroup);
-            return new OkObjectResult(result);
-        }
-
-        [HttpPost("EditLayerGroup")]
-        [Authorize]
-        [HasPermission("LayerGroupScene.Edit.Permission")]
-        public async Task<IActionResult> EditLayerGroup([FromBody] LayerGroup layerGroup)
-        {
-            var result = await _mapService.EditLayerGroup(layerGroup);
-            return new OkObjectResult(result);
-        }
-
-        [HttpDelete("DeleteLayerGroup/{layerGroupId}")]
-        [Authorize]
-        [HasPermission("LayerGroupScene.Delete.Permission")]
-        public async Task<IActionResult> DeleteLayerGroup(long layerGroupId)
-        {
-            var result = await _mapService.DeleteLayerGroup(layerGroupId);
-            return new OkObjectResult(result);
-        }
-
-        [HttpPost("ExportLayerGroup/Excel")]
-        [Authorize]
-        [HasPermission("Table.Export.Permission")]
-        public async Task<IActionResult> ExportLayerGroupExcel()
-        {
-            var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
-
-            var result = await _mapService.ExportLayerGroupExcel(token);
-            return File(
-                result,
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"KatmanGrupları{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
-        }
-
-        [HttpGet("GetLayerGroupById/{layerGroupId}")]
-        [Authorize]
-        [HasPermission("LayerGroupScene.Get.Permission")]
-        public async Task<IActionResult> GetLayerGroupById(long layerGroupId)
-        {
-            var result = await _mapService.GetLayerGroupById(layerGroupId);
+            var result = await _mapService.ListLayers();
             return new OkObjectResult(result);
         }
 

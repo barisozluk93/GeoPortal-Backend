@@ -21,5 +21,7 @@
         public string? SpectralResolution { get; set; }
 
         public string? Wkt { get; set; }
+
+        public string? Satellite { get; set; }
     }
 }

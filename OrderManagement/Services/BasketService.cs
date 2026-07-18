@@ -1,506 +1,600 @@
-﻿using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
+using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.IO;
+using Newtonsoft.Json;
 using OrderManagement.DbContexts;
 using OrderManagement.Entity;
 using OrderManagement.Enums;
 using OrderManagement.Interfaces;
 using OrderManagement.Model;
 using System.Data;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace OrderManagement.Services
+namespace OrderManagement.Services;
+
+public class BasketService : IBasketService
 {
-    public class BasketService : IBasketService
+    private readonly OrderManagementContext _dbContext;
+
+    private const string ImageTypeMono = "Mono";
+    private const string ImageTypeStereo = "Stereo";
+    private const string DefaultItemType = "satelliteImage";
+    private const string EmptyProcessingOptionsJson = "[]";
+
+    public BasketService(
+        OrderManagementContext dbContext,
+        IConfiguration configuration)
     {
-        private readonly OrderManagementContext _dbContext;
-        private readonly IConfiguration _configuration;
+        _dbContext = dbContext;
+    }
 
-        private const string ImageTypeMono = "Mono";
-        private const string ImageTypeStereo = "Stereo";
+    public Task<Result<List<Basket>>> GetBasketList(long userId, string token)
+        => GetBasketItems(userId: userId, basketId: null, activeOnly: true);
 
-        public BasketService(
-            OrderManagementContext dbContext,
-            IConfiguration configuration)
+    public Task<Result<List<Basket>>> GetOrderBasketList(long id, string token)
+        => GetBasketItems(userId: null, basketId: id, activeOnly: false);
+
+    public async Task<Result<Basket>> Save(Basket newBasket)
+    {
+        var result = new Result<Basket>();
+
+        if (newBasket == null)
+            return Fail(result, "Sepet bilgisi boş olamaz.");
+
+        if (newBasket.UserId <= 0)
+            return Fail(result, "Kullanıcı bilgisi zorunludur.");
+
+        if (newBasket.ProductId <= 0 && newBasket.Product == null)
+            return Fail(result, "Ürün bilgisi zorunludur.");
+
+        await using var transaction = await _dbContext.Database
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+        try
         {
-            _dbContext = dbContext;
-            _configuration = configuration;
+            var basket = await GetOrCreateActiveBasket(newBasket.UserId);
+            var productId = await ResolveProductId(newBasket);
+
+            var item = await FindSameItem(
+                basket.Id,
+                productId,
+                newBasket.AoiId,
+                newBasket.RequestWkt);
+
+            if (item == null)
+            {
+                item = new BasketProduct
+                {
+                    BasketId = basket.Id,
+                    ProductId = productId
+                };
+
+                await _dbContext.BasketProducts.AddAsync(item);
+            }
+
+            ApplyItem(item, newBasket);
+
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            result.SetData(await ToResponse(item, basket));
+            result.SetMessage("İşlem başarı ile gerçekleşti.");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            result.SetIsSuccess(false);
+            result.SetMessage(GetExceptionMessage(ex));
         }
 
-        public async Task<Result<Basket>> DeleteAll(long id, long productId)
+        return result;
+    }
+
+    public async Task<Result<List<Basket>>> SaveAll(List<Basket> basketList)
+    {
+        var result = new Result<List<Basket>>();
+
+        if (basketList == null || basketList.Count == 0)
+            return Fail(result, "Sepet listesi boş olamaz.");
+
+        var userId = basketList[0].UserId;
+
+        if (userId <= 0 || basketList.Any(x => x.UserId != userId))
+            return Fail(result, "Sepet kalemlerinin kullanıcı bilgisi geçersizdir.");
+
+        if (basketList.Any(x => x.ProductId <= 0 && x.Product == null))
+            return Fail(result, "Sepet kalemlerinde ürün bilgisi zorunludur.");
+
+        await using var transaction = await _dbContext.Database
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+        try
         {
-            var result = new Result<Basket>();
+            var basket = await GetOrCreateActiveBasket(userId);
+            var affectedItems = new List<BasketProduct>();
 
-            using var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
-
-            try
+            foreach (var request in basketList)
             {
-                var oldBasket = await _dbContext.Baskets
-                    .FirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
+                var productId = await ResolveProductId(request);
 
-                if (oldBasket == null)
+                var item = await FindSameItem(
+                    basket.Id,
+                    productId,
+                    request.AoiId,
+                    request.RequestWkt);
+
+                if (item == null)
                 {
-                    result.SetIsSuccess(false);
-                    result.SetMessage("Böyle bir kayıt bulunmamaktadır.");
-                    return result;
-                }
-
-                var oldBasketProducts = await _dbContext.BasketProducts
-                    .Where(x => x.BasketId == oldBasket.Id && x.IsActive && !x.IsDeleted)
-                    .ToListAsync();
-
-                var toBeDeletedList = oldBasketProducts
-                    .Where(x => x.ProductId == productId)
-                    .ToList();
-
-                if (!toBeDeletedList.Any())
-                {
-                    result.SetIsSuccess(false);
-                    result.SetMessage("Sepette bu ürüne ait kayıt bulunmamaktadır.");
-                    return result;
-                }
-
-                toBeDeletedList.ForEach(x =>
-                {
-                    x.IsDeleted = true;
-                    x.IsActive = false;
-                });
-
-                if (oldBasketProducts.Count == toBeDeletedList.Count)
-                {
-                    oldBasket.IsDeleted = true;
-                    oldBasket.IsActive = false;
-                }
-
-                await _dbContext.SaveChangesAsync();
-                transaction.Commit();
-
-                result.SetData(oldBasket);
-                result.SetMessage("İşlem başarı ile gerçekleşti.");
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-
-                result.SetIsSuccess(false);
-                result.SetMessage(ex.Message);
-            }
-
-            return result;
-        }
-
-        public async Task<Result<Basket>> Delete(long id, long productId)
-        {
-            var result = new Result<Basket>();
-
-            using var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
-
-            try
-            {
-                var oldBasket = await _dbContext.Baskets
-                    .FirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
-
-                if (oldBasket == null)
-                {
-                    result.SetIsSuccess(false);
-                    result.SetMessage("Böyle bir kayıt bulunmamaktadır.");
-                    return result;
-                }
-
-                var oldBasketProducts = await _dbContext.BasketProducts
-                    .Where(x => x.BasketId == oldBasket.Id && x.IsActive && !x.IsDeleted)
-                    .ToListAsync();
-
-                var toBeDeleted = oldBasketProducts
-                    .FirstOrDefault(x => x.ProductId == productId);
-
-                if (toBeDeleted == null)
-                {
-                    result.SetIsSuccess(false);
-                    result.SetMessage("Sepette bu ürüne ait kayıt bulunmamaktadır.");
-                    return result;
-                }
-
-                toBeDeleted.IsDeleted = true;
-                toBeDeleted.IsActive = false;
-
-                if (oldBasketProducts.Count == 1)
-                {
-                    oldBasket.IsDeleted = true;
-                    oldBasket.IsActive = false;
-                }
-
-                await _dbContext.SaveChangesAsync();
-                transaction.Commit();
-
-                result.SetData(oldBasket);
-                result.SetMessage("İşlem başarı ile gerçekleşti.");
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-
-                result.SetIsSuccess(false);
-                result.SetMessage(ex.Message);
-            }
-
-            return result;
-        }
-
-        public async Task<Result<List<Basket>>> GetBasketList(long userId, string token)
-        {
-            var result = new Result<List<Basket>>();
-
-            using var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
-
-            try
-            {
-                var basket = await _dbContext.Baskets
-                    .FirstOrDefaultAsync(x => x.UserId == userId && x.IsActive && !x.IsDeleted);
-
-                if (basket == null)
-                {
-                    result.SetData(null);
-                    result.SetMessage("İşlem başarı ile gerçekleşti.");
-                    return result;
-                }
-
-                var productList = await _dbContext.BasketProducts
-                    .Include(x => x.Product)
-                        .ThenInclude(x => x.Classes)
-                    .Where(x =>
-                        x.BasketId == basket.Id &&
-                        x.IsActive &&
-                        !x.IsDeleted &&
-                        x.Product != null)
-                    .Select(x => x.Product)
-                    .ToListAsync();
-
-                var basketList = new List<Basket>();
-
-                foreach (var product in productList)
-                {
-                    PrepareProductForResponse(product);
-
-                    basketList.Add(new Basket
+                    item = new BasketProduct
                     {
-                        Id = basket.Id,
-                        UserId = basket.UserId,
-                        ProductId = product.Id,
-                        IsDeleted = false,
-                        IsActive = true,
-                        Product = product
-                    });
+                        BasketId = basket.Id,
+                        ProductId = productId
+                    };
+
+                    await _dbContext.BasketProducts.AddAsync(item);
                 }
 
-                result.SetData(basketList);
-                result.SetMessage("İşlem başarı ile gerçekleşti.");
-            }
-            catch (Exception ex)
-            {
-                result.SetIsSuccess(false);
-                result.SetMessage(ex.Message);
+                ApplyItem(item, request);
+                affectedItems.Add(item);
             }
 
-            return result;
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            var responses = new List<Basket>(affectedItems.Count);
+
+            foreach (var item in affectedItems)
+                responses.Add(await ToResponse(item, basket));
+
+            result.SetData(responses);
+            result.SetMessage("İşlem başarı ile gerçekleşti.");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            result.SetIsSuccess(false);
+            result.SetMessage(GetExceptionMessage(ex));
         }
 
-        public async Task<Result<Basket>> Save(Basket newBasket)
+        return result;
+    }
+
+    public Task<Result<Basket>> Delete(long id, long productId)
+        => DeleteInternal(id, productId, deleteAll: false);
+
+    public Task<Result<Basket>> DeleteAll(long id, long productId)
+        => DeleteInternal(id, productId, deleteAll: true);
+
+    private async Task<Result<Basket>> DeleteInternal(
+        long basketId,
+        long productId,
+        bool deleteAll)
+    {
+        var result = new Result<Basket>();
+
+        await using var transaction = await _dbContext.Database
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+        try
         {
-            var result = new Result<Basket>();
+            var basket = await _dbContext.Baskets.FirstOrDefaultAsync(x =>
+                x.Id == basketId &&
+                x.IsActive &&
+                !x.IsDeleted);
 
-            using var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+            if (basket == null)
+                return Fail(result, "Böyle bir sepet bulunmamaktadır.");
 
-            try
+            var query = _dbContext.BasketProducts.Where(x =>
+                x.BasketId == basketId &&
+                x.ProductId == productId &&
+                x.IsActive &&
+                !x.IsDeleted);
+
+            List<BasketProduct> items;
+
+            if (deleteAll)
             {
-                var basket = await GetOrCreateActiveBasket(newBasket.UserId);
+                items = await query.ToListAsync();
+            }
+            else
+            {
+                var item = await query.OrderBy(x => x.Id).FirstOrDefaultAsync();
+                items = item == null ? new List<BasketProduct>() : new List<BasketProduct> { item };
+            }
 
-                long productId = newBasket.ProductId;
+            if (items.Count == 0)
+                return Fail(result, "Sepette bu ürüne ait kayıt bulunmamaktadır.");
 
-                if (newBasket.ProductId == 0)
-                {
-                    if (newBasket.Product == null)
-                    {
-                        result.SetIsSuccess(false);
-                        result.SetMessage("Ürün bilgisi zorunludur.");
-                        return result;
-                    }
+            foreach (var item in items)
+            {
+                item.IsActive = false;
+                item.IsDeleted = true;
+            }
 
-                    var newProduct = PrepareCustomProductForSave(newBasket.Product);
-                    _dbContext.Products.Add(newProduct);
+            var deletedItemIds = items.Select(x => x.Id).ToList();
 
-                    await _dbContext.SaveChangesAsync();
+            var hasOtherActiveItem = await _dbContext.BasketProducts.AnyAsync(x =>
+                x.BasketId == basketId &&
+                x.IsActive &&
+                !x.IsDeleted &&
+                !deletedItemIds.Contains(x.Id));
 
-                    productId = newProduct.Id;
-                    newBasket.ProductId = productId;
-                    newBasket.Product = newProduct;
-                }
+            if (!hasOtherActiveItem)
+            {
+                basket.IsActive = false;
+                basket.IsDeleted = true;
+            }
 
-                var alreadyExists = await _dbContext.BasketProducts.AnyAsync(x =>
-                    x.BasketId == basket.Id &&
-                    x.ProductId == productId &&
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            result.SetData(basket);
+            result.SetMessage("İşlem başarı ile gerçekleşti.");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            result.SetIsSuccess(false);
+            result.SetMessage(GetExceptionMessage(ex));
+        }
+
+        return result;
+    }
+
+    private async Task<Result<List<Basket>>> GetBasketItems(
+        long? userId,
+        long? basketId,
+        bool activeOnly)
+    {
+        var result = new Result<List<Basket>>();
+
+        try
+        {
+            var basketQuery = _dbContext.Baskets
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (userId.HasValue)
+            {
+                basketQuery = basketQuery.Where(x =>
+                    x.UserId == userId.Value &&
                     x.IsActive &&
                     !x.IsDeleted);
-
-                if (!alreadyExists)
-                {
-                    _dbContext.BasketProducts.Add(new BasketProduct
-                    {
-                        ProductId = productId,
-                        BasketId = basket.Id,
-                        IsDeleted = false,
-                        IsActive = true
-                    });
-
-                    await _dbContext.SaveChangesAsync();
-                }
-
-                transaction.Commit();
-
-                if (newBasket.Product != null)
-                    PrepareProductForResponse(newBasket.Product);
-
-                result.SetData(newBasket);
-                result.SetMessage("İşlem başarı ile gerçekleşti.");
             }
-            catch (Exception ex)
+
+            if (basketId.HasValue)
             {
-                transaction.Rollback();
-
-                result.SetIsSuccess(false);
-                result.SetMessage(ex.Message);
+                basketQuery = basketQuery.Where(x =>
+                    x.Id == basketId.Value &&
+                    !x.IsDeleted);
             }
 
-            return result;
+            var basket = await basketQuery
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
+
+            if (basket == null)
+            {
+                result.SetData(new List<Basket>());
+                result.SetMessage("İşlem başarı ile gerçekleşti.");
+                return result;
+            }
+
+            var itemQuery = _dbContext.BasketProducts
+                .AsNoTracking()
+                .Include(x => x.Product)
+                    .ThenInclude(x => x.Classes)
+                .Where(x =>
+                    x.BasketId == basket.Id &&
+                    !x.IsDeleted);
+
+            if (activeOnly)
+                itemQuery = itemQuery.Where(x => x.IsActive);
+
+            var items = await itemQuery
+                .OrderBy(x => x.Id)
+                .ToListAsync();
+
+            var list = new List<Basket>(items.Count);
+
+            foreach (var item in items)
+                list.Add(await ToResponse(item, basket));
+
+            result.SetData(list);
+            result.SetMessage("İşlem başarı ile gerçekleşti.");
+        }
+        catch (Exception ex)
+        {
+            result.SetIsSuccess(false);
+            result.SetMessage(GetExceptionMessage(ex));
         }
 
-        public async Task<Result<List<Basket>>> SaveAll(List<Basket> basketList)
+        return result;
+    }
+
+    private async Task<long> ResolveProductId(Basket request)
+    {
+        if (request.ProductId > 0)
+            return request.ProductId;
+
+        if (request.Product == null)
+            throw new InvalidOperationException("Ürün bilgisi bulunamadı.");
+
+        var product = PrepareCustomProductForSave(request.Product);
+
+        await _dbContext.Products.AddAsync(product);
+        await _dbContext.SaveChangesAsync();
+
+        request.ProductId = product.Id;
+        request.Product = product;
+
+        return product.Id;
+    }
+
+    private async Task<BasketProduct?> FindSameItem(
+        long basketId,
+        long productId,
+        string? aoiId,
+        string? requestWkt)
+    {
+        var requestHash = CreateRequestHash(requestWkt);
+        var normalizedAoiId = NormalizeNullableText(aoiId);
+
+        var candidates = await _dbContext.BasketProducts
+            .Where(x =>
+                x.BasketId == basketId &&
+                x.ProductId == productId &&
+                x.AoiId == normalizedAoiId &&
+                x.RequestHash == requestHash &&
+                x.IsActive &&
+                !x.IsDeleted)
+            .ToListAsync();
+
+        // SHA-256 çakışması pratikte beklenmez. Yine de gerçek WKT karşılaştırması
+        // yapılarak yanlış kalemin eşleşmesi engellenir.
+        var normalizedRequestWkt = NormalizeWkt(requestWkt);
+
+        return candidates.FirstOrDefault(x =>
+            NormalizeWkt(x.RequestWkt) == normalizedRequestWkt);
+    }
+
+    private static void ApplyItem(BasketProduct item, Basket request)
+    {
+        var count = Math.Max(1, Convert.ToInt32(request.NumberOf));
+        var area = Math.Max(0d, Convert.ToDouble(request.RequestAreaKm2));
+
+        var requestedUnitPrice = Math.Max(0d, Convert.ToDouble(request.UnitPrice));
+        var productPrice = request.Product == null
+            ? 0d
+            : Math.Max(0d, Convert.ToDouble(request.Product.Price));
+
+        var unitPrice = requestedUnitPrice > 0d
+            ? requestedUnitPrice
+            : productPrice;
+
+        var requestedBaseTotal = Math.Max(0d, Convert.ToDouble(request.BaseTotalPrice));
+        var baseTotal = requestedBaseTotal > 0d
+            ? requestedBaseTotal
+            : area * unitPrice;
+
+        var processingJson = ResolveProcessingOptionsJson(request);
+        var processingTotal = Math.Max(0d, Convert.ToDouble(request.ProcessingTotalPrice));
+
+        var requestedCalculatedTotal = Math.Max(
+            0d,
+            Convert.ToDouble(request.CalculatedTotalPrice));
+
+        var calculatedTotal = requestedCalculatedTotal > 0d
+            ? requestedCalculatedTotal
+            : (baseTotal + processingTotal) * count;
+
+        item.NumberOf = count;
+
+        item.AoiId = NormalizeNullableText(request.AoiId);
+        item.AoiName = NormalizeNullableText(request.AoiName);
+        item.AoiWkt = NormalizeNullableText(request.AoiWkt);
+
+        item.RequestWkt = NormalizeNullableText(request.RequestWkt);
+        item.RequestHash = CreateRequestHash(request.RequestWkt);
+        item.IntersectionWkt = NormalizeNullableText(request.IntersectionWkt);
+
+        item.RequestAreaKm2 = area;
+        item.UnitPrice = unitPrice;
+        item.BaseTotalPrice = baseTotal;
+
+        item.ProcessingOptionsJson = processingJson;
+        item.ProcessingTotalPrice = processingTotal;
+        item.CalculatedTotalPrice = calculatedTotal;
+
+        item.ItemType = string.IsNullOrWhiteSpace(request.ItemType)
+            ? DefaultItemType
+            : request.ItemType.Trim();
+
+        item.IsActive = true;
+        item.IsDeleted = false;
+    }
+
+    private async Task<Basket> ToResponse(BasketProduct item, Basket basket)
+    {
+        var product = item.Product ?? await _dbContext.Products
+            .AsNoTracking()
+            .Include(x => x.Classes)
+            .FirstAsync(x => x.Id == item.ProductId);
+
+        PrepareProductForResponse(product);
+
+        object processingOptions;
+
+        try
         {
-            var result = new Result<List<Basket>>();
-
-            using var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
-
-            try
-            {
-                if (basketList == null || !basketList.Any())
-                {
-                    result.SetIsSuccess(false);
-                    result.SetMessage("Sepet listesi boş olamaz.");
-                    return result;
-                }
-
-                var userId = basketList.First().UserId;
-                var basket = await GetOrCreateActiveBasket(userId);
-
-                foreach (var item in basketList)
-                {
-                    long productId = item.ProductId;
-
-                    if (item.ProductId == 0)
-                    {
-                        if (item.Product == null)
-                            continue;
-
-                        var newProduct = PrepareCustomProductForSave(item.Product);
-                        _dbContext.Products.Add(newProduct);
-
-                        await _dbContext.SaveChangesAsync();
-
-                        productId = newProduct.Id;
-                        item.ProductId = productId;
-                        item.Product = newProduct;
-                    }
-
-                    var alreadyExists = await _dbContext.BasketProducts.AnyAsync(x =>
-                        x.BasketId == basket.Id &&
-                        x.ProductId == productId &&
-                        x.IsActive &&
-                        !x.IsDeleted);
-
-                    if (alreadyExists)
-                        continue;
-
-                    _dbContext.BasketProducts.Add(new BasketProduct
-                    {
-                        ProductId = productId,
-                        BasketId = basket.Id,
-                        IsDeleted = false,
-                        IsActive = true
-                    });
-
-                    await _dbContext.SaveChangesAsync();
-                }
-
-                transaction.Commit();
-
-                foreach (var item in basketList)
-                {
-                    if (item.Product != null)
-                        PrepareProductForResponse(item.Product);
-                }
-
-                result.SetData(basketList);
-                result.SetMessage("İşlem başarı ile gerçekleşti.");
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-
-                result.SetIsSuccess(false);
-                result.SetMessage(ex.Message);
-            }
-
-            return result;
+            processingOptions = JsonConvert.DeserializeObject(
+                string.IsNullOrWhiteSpace(item.ProcessingOptionsJson)
+                    ? EmptyProcessingOptionsJson
+                    : item.ProcessingOptionsJson) ?? Array.Empty<object>();
+        }
+        catch
+        {
+            processingOptions = Array.Empty<object>();
         }
 
-        public async Task<Result<List<Basket>>> GetOrderBasketList(long id, string token)
+        return new Basket
         {
-            var result = new Result<List<Basket>>();
+            Id = basket.Id,
+            BasketItemId = item.Id,
+            UserId = basket.UserId,
+            ProductId = item.ProductId,
+            Product = product,
+            IsActive = item.IsActive,
+            IsDeleted = item.IsDeleted,
+            NumberOf = item.NumberOf,
+            AoiId = item.AoiId,
+            AoiName = item.AoiName,
+            AoiWkt = item.AoiWkt,
+            RequestWkt = item.RequestWkt,
+            IntersectionWkt = item.IntersectionWkt,
+            RequestAreaKm2 = item.RequestAreaKm2,
+            UnitPrice = item.UnitPrice,
+            BaseTotalPrice = item.BaseTotalPrice,
+            ProcessingOptionsJson = item.ProcessingOptionsJson,
+            ProcessingOptions = processingOptions,
+            ProcessingTotalPrice = item.ProcessingTotalPrice,
+            CalculatedTotalPrice = item.CalculatedTotalPrice,
+            ItemType = item.ItemType
+        };
+    }
 
-            using var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+    private async Task<Basket> GetOrCreateActiveBasket(long userId)
+    {
+        var basket = await _dbContext.Baskets.FirstOrDefaultAsync(x =>
+            x.UserId == userId &&
+            x.IsActive &&
+            !x.IsDeleted);
 
-            try
-            {
-                var basket = await _dbContext.Baskets
-                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
-
-                if (basket == null)
-                {
-                    result.SetData(null);
-                    result.SetMessage("İşlem başarı ile gerçekleşti.");
-                    return result;
-                }
-
-                var productList = await _dbContext.BasketProducts
-                    .Include(x => x.Product)
-                        .ThenInclude(x => x.Classes)
-                    .Where(x =>
-                        x.BasketId == basket.Id &&
-                        !x.IsDeleted &&
-                        x.Product != null)
-                    .Select(x => x.Product)
-                    .ToListAsync();
-
-                var basketList = new List<Basket>();
-
-                foreach (var product in productList)
-                {
-                    PrepareProductForResponse(product);
-
-                    basketList.Add(new Basket
-                    {
-                        Id = basket.Id,
-                        UserId = basket.UserId,
-                        ProductId = product.Id,
-                        IsDeleted = false,
-                        IsActive = false,
-                        Product = product
-                    });
-                }
-
-                result.SetData(basketList);
-                result.SetMessage("İşlem başarı ile gerçekleşti.");
-            }
-            catch (Exception ex)
-            {
-                result.SetIsSuccess(false);
-                result.SetMessage(ex.Message);
-            }
-
-            return result;
-        }
-
-        private async Task<Basket> GetOrCreateActiveBasket(long userId)
-        {
-            var basket = await _dbContext.Baskets
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.IsActive && !x.IsDeleted);
-
-            if (basket != null)
-                return basket;
-
-            basket = new Basket
-            {
-                UserId = userId,
-                IsDeleted = false,
-                IsActive = true
-            };
-
-            _dbContext.Baskets.Add(basket);
-            await _dbContext.SaveChangesAsync();
-
+        if (basket != null)
             return basket;
-        }
 
-        private static Product PrepareCustomProductForSave(Product product)
+        basket = new Basket
         {
-            if (!string.IsNullOrWhiteSpace(product.Wkt))
-            {
-                var reader = new WKTReader();
-                var geometry = reader.Read(product.Wkt);
-                geometry.SRID = 4326;
-                product.Geometry = geometry;
-            }
+            UserId = userId,
+            IsActive = true,
+            IsDeleted = false
+        };
 
-            product.Id = 0;
-            product.ImageType = NormalizeImageType(product.ImageType);
-            product.IsDeleted = false;
-            product.IsInMarket = product.IsInMarket;
-            product.IsCustomArea = true;
+        await _dbContext.Baskets.AddAsync(basket);
+        await _dbContext.SaveChangesAsync();
 
-            if (product.CategoryId == 0)
-                product.CategoryId = (int)ProductCategory.CustomArea;
+        return basket;
+    }
 
-            product.Name = string.IsNullOrWhiteSpace(product.Name)
-                ? "Özel Alan"
-                : product.Name;
+    private static string ResolveProcessingOptionsJson(Basket request)
+    {
+        if (request.ProcessingOptions != null)
+            return JsonConvert.SerializeObject(request.ProcessingOptions);
 
-            product.Currency = string.IsNullOrWhiteSpace(product.Currency)
-                ? "TRY"
-                : product.Currency;
+        return string.IsNullOrWhiteSpace(request.ProcessingOptionsJson)
+            ? EmptyProcessingOptionsJson
+            : request.ProcessingOptionsJson;
+    }
 
-            product.PriceStr = string.IsNullOrWhiteSpace(product.PriceStr)
-                ? $"₺{product.Price}"
-                : product.PriceStr;
-
-            product.Provider = string.IsNullOrWhiteSpace(product.Provider)
-                ? "Custom Area"
-                : product.Provider;
-
-            product.SourceLabel = string.IsNullOrWhiteSpace(product.SourceLabel)
-                ? "Custom Area"
-                : product.SourceLabel;
-
-            return product;
-        }
-
-        private static void PrepareProductForResponse(Product product)
+    private static Product PrepareCustomProductForSave(Product product)
+    {
+        if (!string.IsNullOrWhiteSpace(product.Wkt))
         {
-            product.ImageType = NormalizeImageType(product.ImageType);
-
-            if (product.Geometry != null)
-            {
-                product.Wkt = ConvertToWkt(product.Geometry);
-                product.Geometry = null;
-            }
+            var geometry = new WKTReader().Read(product.Wkt);
+            geometry.SRID = 4326;
+            product.Geometry = geometry;
         }
 
-        private static string NormalizeImageType(string? imageType)
+        product.Id = 0;
+        product.ImageType = NormalizeImageType(product.ImageType);
+        product.IsDeleted = false;
+        product.IsCustomArea = true;
+
+        if (product.CategoryId == 0)
+            product.CategoryId = (int)ProductCategory.CustomArea;
+
+        product.Name = string.IsNullOrWhiteSpace(product.Name)
+            ? "Özel Alan"
+            : product.Name;
+
+        product.Currency = string.IsNullOrWhiteSpace(product.Currency)
+            ? "TRY"
+            : product.Currency;
+
+        product.PriceStr = string.IsNullOrWhiteSpace(product.PriceStr)
+            ? $"₺{product.Price}"
+            : product.PriceStr;
+
+        product.Provider = string.IsNullOrWhiteSpace(product.Provider)
+            ? "Custom Area"
+            : product.Provider;
+
+        product.SourceLabel = string.IsNullOrWhiteSpace(product.SourceLabel)
+            ? "Custom Area"
+            : product.SourceLabel;
+
+        return product;
+    }
+
+    private static void PrepareProductForResponse(Product product)
+    {
+        product.ImageType = NormalizeImageType(product.ImageType);
+
+        if (product.Geometry != null)
         {
-            if (string.IsNullOrWhiteSpace(imageType))
-                return ImageTypeMono;
-
-            if (imageType.Equals(ImageTypeStereo, StringComparison.OrdinalIgnoreCase))
-                return ImageTypeStereo;
-
-            if (imageType.Equals(ImageTypeMono, StringComparison.OrdinalIgnoreCase))
-                return ImageTypeMono;
-
-            return ImageTypeMono;
+            product.Wkt = new WKTWriter().Write(product.Geometry);
+            product.Geometry = null;
         }
+    }
 
-        private static string ConvertToWkt(Geometry geometry)
+    private static string NormalizeImageType(string? value)
+        => value?.Equals(ImageTypeStereo, StringComparison.OrdinalIgnoreCase) == true
+            ? ImageTypeStereo
+            : ImageTypeMono;
+
+    private static string? NormalizeNullableText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string NormalizeWkt(string? requestWkt)
+    {
+        if (string.IsNullOrWhiteSpace(requestWkt))
+            return string.Empty;
+
+        var builder = new StringBuilder(requestWkt.Length);
+
+        foreach (var character in requestWkt)
         {
-            var writer = new WKTWriter();
-            return writer.Write(geometry);
+            if (!char.IsWhiteSpace(character))
+                builder.Append(char.ToUpperInvariant(character));
         }
+
+        return builder.ToString();
+    }
+
+    private static string? CreateRequestHash(string? requestWkt)
+    {
+        var normalized = NormalizeWkt(requestWkt);
+
+        if (string.IsNullOrEmpty(normalized))
+            return null;
+
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(normalized);
+        var hash = sha256.ComputeHash(bytes);
+
+        return Convert.ToHexString(hash);
+    }
+
+    private static string GetExceptionMessage(Exception exception)
+        => exception.InnerException?.Message ?? exception.Message;
+
+    private static TResult Fail<TResult>(TResult result, string message)
+        where TResult : class
+    {
+        dynamic dynamicResult = result;
+        dynamicResult.SetIsSuccess(false);
+        dynamicResult.SetMessage(message);
+        return result;
     }
 }

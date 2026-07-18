@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
@@ -268,6 +268,7 @@ namespace OrderManagement.Services
 
                         transaction.Commit();
 
+                        item.Product.Geometry = null;
                         result.SetData(item);
                         result.SetMessage("İşlem başarı ile gerçekleşti.");
                     }
@@ -287,111 +288,138 @@ namespace OrderManagement.Services
         public async Task<Result<Order>> Save(Order order, string token)
         {
             var result = new Result<Order>();
-
-            using (var transaction = _dbContext.Database.BeginTransaction(IsolationLevel.ReadUncommitted))
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+            try
             {
+                var basket = await _dbContext.Baskets
+                    .FirstOrDefaultAsync(x => x.Id == order.BasketId && x.UserId == order.UserId && x.IsActive && !x.IsDeleted);
+
+                if (basket == null)
+                {
+                    result.SetIsSuccess(false);
+                    result.SetMessage("Aktif sepet bulunamadı.");
+                    return result;
+                }
+
+                var basketProducts = await _dbContext.BasketProducts
+                    .Include(x => x.Product)
+                    .Where(x => x.BasketId == basket.Id && x.IsActive && !x.IsDeleted)
+                    .ToListAsync();
+
+                if (basketProducts.Count == 0)
+                {
+                    result.SetIsSuccess(false);
+                    result.SetMessage("Sepet boş olduğu için sipariş oluşturulamadı.");
+                    return result;
+                }
+
+                var serverTotal = basketProducts.Sum(x => x.CalculatedTotalPrice);
+                order.Id = 0;
+                order.Price = serverTotal;
+                order.OrderDate = DateTime.UtcNow;
+                order.OrderStatus = (int)OrderStatus.SiparisTamamlanmadi;
+                order.OrderNo = Guid.NewGuid().ToString("N").ToUpperInvariant();
+                order.Basket = null;
+                order.OrderProducts = null;
+
+                _dbContext.Orders.Add(order);
+                await _dbContext.SaveChangesAsync();
+
+                var isOrderCompleted = true;
+                foreach (var basketProduct in basketProducts)
+                {
+                    var completedImmediately = basketProduct.Product.CategoryId == 1 || basketProduct.Product.CategoryId == 2;
+                    if (!completedImmediately) isOrderCompleted = false;
+
+                    var orderProduct = new OrderProduct
+                    {
+                        OrderId = order.Id,
+                        ProductId = basketProduct.ProductId,
+                        ProccessDate = order.OrderDate,
+                        OrderStatus = completedImmediately ? (int)OrderStatus.Tamamlandi : (int)OrderStatus.OnayBekliyor,
+                        NumberOf = basketProduct.NumberOf,
+                        AoiId = basketProduct.AoiId,
+                        AoiName = basketProduct.AoiName,
+                        AoiWkt = basketProduct.AoiWkt,
+                        RequestWkt = basketProduct.RequestWkt,
+                        IntersectionWkt = basketProduct.IntersectionWkt,
+                        RequestAreaKm2 = basketProduct.RequestAreaKm2,
+                        UnitPrice = basketProduct.UnitPrice,
+                        BaseTotalPrice = basketProduct.BaseTotalPrice,
+                        ProcessingOptionsJson = basketProduct.ProcessingOptionsJson,
+                        ProcessingTotalPrice = basketProduct.ProcessingTotalPrice,
+                        CalculatedTotalPrice = basketProduct.CalculatedTotalPrice,
+                        ItemType = basketProduct.ItemType
+                    };
+
+                    _dbContext.OrderProducts.Add(orderProduct);
+                    await _dbContext.SaveChangesAsync();
+
+                    if (basketProduct.Product.CategoryId == 2)
+                    {
+                        orderProduct.Product = basketProduct.Product;
+                        orderProduct.ProductValue = await CreateApiKeyAsync(order, orderProduct);
+                    }
+
+                    basketProduct.IsActive = false;
+                }
+
+                basket.IsActive = false;
+                order.OrderStatus = isOrderCompleted
+                    ? (int)OrderStatus.SiparisTamamlandi
+                    : (int)OrderStatus.SiparisTamamlanmadi;
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
                 try
                 {
                     var superUsers = await GetSuperUsers(token);
-
-                    order.OrderDate = DateTime.UtcNow;
-                    order.OrderStatus = (int)OrderStatus.SiparisTamamlanmadi;
-                    order.OrderNo = Guid.NewGuid().ToString();
-                    _dbContext.Add(order);
-                    await _dbContext.SaveChangesAsync();
-
-                    var basket = await _dbContext.Baskets.Where(x => x.Id == order.BasketId && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
-                    basket.IsActive = false;
-
-                    var basketProducts = await _dbContext.BasketProducts.Include(x => x.Product).Where(x => x.BasketId == order.BasketId && x.IsActive && !x.IsDeleted).ToListAsync();
-                    basketProducts.ForEach(x => x.IsActive = false);
-                    await _dbContext.SaveChangesAsync();
-
-                    bool isOrderCompleted = true;
-                    foreach (var basketProduct in basketProducts)
+                    foreach (var superUser in superUsers)
                     {
-                        OrderProduct orderProduct = new OrderProduct();
-                        orderProduct.OrderId = order.Id;
-                        orderProduct.ProductId = basketProduct.ProductId;
-                        orderProduct.ProccessDate = order.OrderDate.Value;
-                        orderProduct.Product = basketProduct.Product;
-
-                        if (basketProduct.Product.CategoryId == 1)
+                        await SaveNotification(new Notification
                         {
-                            orderProduct.OrderStatus = (int)OrderStatus.Tamamlandi;
-                        }
-                        else if (basketProduct.Product.CategoryId == 2)
-                        {
-                            orderProduct.OrderStatus = (int)OrderStatus.Tamamlandi;
-                        }
-                        else
-                        {
-                            isOrderCompleted = false;
-                            orderProduct.OrderStatus = (int)OrderStatus.OnayBekliyor;
-                        }
-
-                        _dbContext.Add(orderProduct);
-                        await _dbContext.SaveChangesAsync();
-
-                        if (basketProduct.Product.CategoryId == 2)
-                        {
-                            var generatedApiKey = await CreateApiKeyAsync(order, orderProduct);
-                            orderProduct.ProductValue = generatedApiKey;
-                            await _dbContext.SaveChangesAsync();
-                        }
-
-                        foreach (var superUser in superUsers)
-                        {
-                            Notification notification = new Notification();
-                            notification.Type = "NEW_ORDER";
-                            notification.Title = "GeoPortal";
-                            notification.Body = order.OrderNo + "/" + orderProduct.Product.Name;
-                            notification.IsDeleted = false;
-                            notification.IsRead = false;
-                            notification.UserId = superUser;
-                            notification.CreatedAt = DateTime.UtcNow;
-                            notification.TargetUrl = "" + orderProduct.Id;
-
-                            await SaveNotification(notification, token);
-                        }
+                            Type = "NEW_ORDER", Title = "GeoPortal", Body = order.OrderNo,
+                            IsDeleted = false, IsRead = false, UserId = superUser,
+                            CreatedAt = DateTime.UtcNow, TargetUrl = order.Id.ToString()
+                        }, token);
                     }
 
                     if (isOrderCompleted)
                     {
-                        order.OrderStatus = (int)OrderStatus.SiparisTamamlandi;
-                        await _dbContext.SaveChangesAsync();
-
-                        Notification notification = new Notification();
-                        notification.Type = "ORDER_COMPLETED";
-                        notification.Title = "GeoPortal";
-                        notification.Body = order.OrderNo;
-                        notification.IsDeleted = false;
-                        notification.IsRead = false;
-                        notification.UserId = order.UserId;
-                        notification.CreatedAt = DateTime.UtcNow;
-                        notification.TargetUrl = "" + order.Id;
-
-                        await SaveNotification(notification, token);
+                        await SaveNotification(new Notification
+                        {
+                            Type = "ORDER_COMPLETED", Title = "GeoPortal", Body = order.OrderNo,
+                            IsDeleted = false, IsRead = false, UserId = order.UserId,
+                            CreatedAt = DateTime.UtcNow, TargetUrl = order.Id.ToString()
+                        }, token);
                     }
-                    else
-                    {
-                        order.OrderStatus = (int)OrderStatus.SiparisTamamlanmadi;
-                        await _dbContext.SaveChangesAsync();
-                    }
-
-                    transaction.Commit();
-
-                    result.SetData(order);
-                    result.SetMessage("İşlem başarı ile gerçekleşti.");
-
                 }
-                catch (Exception ex)
+                catch
                 {
-                    transaction.Rollback();
-
-                    result.SetIsSuccess(false);
-                    result.SetMessage(ex.Message);
+                    // Bildirim hatası sipariş transaction'ını bozmaz.
                 }
+
+                order.OrderProducts = await _dbContext.OrderProducts
+                    .Include(x => x.Product)
+                    .Where(x => x.OrderId == order.Id)
+                    .ToListAsync();
+
+                foreach (var item in order.OrderProducts)
+                {
+                    try { item.ProcessingOptions = JsonConvert.DeserializeObject(item.ProcessingOptionsJson); }
+                    catch { item.ProcessingOptions = Array.Empty<object>(); }
+                    if (item.Product != null) PrepareProductForResponse(item.Product);
+                }
+
+                result.SetData(order);
+                result.SetMessage("İşlem başarı ile gerçekleşti.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                result.SetIsSuccess(false);
+                result.SetMessage(ex.Message);
             }
 
             return result;
@@ -415,7 +443,9 @@ namespace OrderManagement.Services
 
                     foreach (var orderProduct in order.OrderProducts)
                     {
-                        PrepareProductForResponse(orderProduct.Product);
+                        try { orderProduct.ProcessingOptions = JsonConvert.DeserializeObject(orderProduct.ProcessingOptionsJson); }
+                        catch { orderProduct.ProcessingOptions = Array.Empty<object>(); }
+                        if (orderProduct.Product != null) PrepareProductForResponse(orderProduct.Product);
                     }
 
                     order.InvoiceAddress = await GetAddress(order.InvoiceAddressId, token);

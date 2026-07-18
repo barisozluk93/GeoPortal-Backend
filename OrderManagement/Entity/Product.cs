@@ -68,6 +68,8 @@ namespace OrderManagement.Entity
         public string? DataOwner { get; set; }
 
         public bool? IsOrthorectified { get; set; }
+
+        public bool? IsNVDIAnalysis { get; set; }
         public bool? IsPansharpened { get; set; }
         public bool? IsClassified { get; set; }
 
@@ -75,6 +77,7 @@ namespace OrderManagement.Entity
         public string? PreviewUrl { get; set; }
 
         public string? MetadataUrl { get; set; }
+        public string? PropertyUrl { get; set; }
 
         // 💰
         public decimal Price { get; set; }
@@ -88,6 +91,7 @@ namespace OrderManagement.Entity
         public int CategoryId { get; set; }
 
         public string? Description { get; set; }
+        public string? Priority { get; set; }
 
         // 🔗 RELATION
         public ICollection<ProductClass>? Classes { get; set; }

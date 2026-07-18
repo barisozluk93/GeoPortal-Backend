@@ -28,7 +28,7 @@ namespace OrderManagement.Services
                 ? null
                 : pagingParameter.FilterText.ToLower();
 
-            using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
 
             try
             {
@@ -107,7 +107,9 @@ namespace OrderManagement.Services
                         IsOrthorectified = x.IsOrthorectified,
                         IsPansharpened = x.IsPansharpened,
                         IsClassified = x.IsClassified,
+                        IsNVDIAnalysis = x.IsNVDIAnalysis,
 
+                        
                         Classes = x.Classes
                     });
 
@@ -123,9 +125,12 @@ namespace OrderManagement.Services
                 });
 
                 result.SetMessage("İşlem başarı ile gerçekleşti.");
+
+                await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 result.SetIsSuccess(false);
                 result.SetMessage(ex.Message);
             }
@@ -136,6 +141,9 @@ namespace OrderManagement.Services
         public async Task<Result<Product>> GetById(long id)
         {
             var result = new Result<Product>();
+
+            await using var transaction = await _dbContext.Database
+                .BeginTransactionAsync(IsolationLevel.ReadUncommitted);
 
             try
             {
@@ -209,6 +217,7 @@ namespace OrderManagement.Services
                         IsOrthorectified = x.IsOrthorectified,
                         IsPansharpened = x.IsPansharpened,
                         IsClassified = x.IsClassified,
+                        IsNVDIAnalysis = x.IsNVDIAnalysis,
 
                         BboxMinX = x.BboxMinX,
                         BboxMinY = x.BboxMinY,
@@ -232,9 +241,12 @@ namespace OrderManagement.Services
 
                 result.SetData(product);
                 result.SetMessage("İşlem başarı ile gerçekleşti.");
+
+                await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 result.SetIsSuccess(false);
                 result.SetMessage(ex.Message);
             }
@@ -242,7 +254,8 @@ namespace OrderManagement.Services
             return result;
         }
 
-        public async Task<List<ProductSmartFilterResult>> SmartFilterAsync(ProductSmartFilterRequest request)
+        public async Task<List<ProductSmartFilterResult>> SmartFilterAsync(
+    ProductSmartFilterRequest request)
         {
             var query = _dbContext.Products
                 .AsNoTracking()
@@ -254,6 +267,7 @@ namespace OrderManagement.Services
             if (!string.IsNullOrWhiteSpace(request.Wkt))
             {
                 var reader = new WKTReader();
+
                 var searchGeometry = reader.Read(request.Wkt);
                 searchGeometry.SRID = 4326;
 
@@ -271,6 +285,15 @@ namespace OrderManagement.Services
                     x.ImageType.ToLower() == imageType);
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Satellite))
+            {
+                var satellite = request.Satellite.Trim().ToLower();
+
+                query = query.Where(x =>
+                    x.Satellite != null &&
+                    x.Satellite.ToLower().Contains(satellite));
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Provider))
             {
                 var provider = request.Provider.Trim().ToLower();
@@ -282,72 +305,101 @@ namespace OrderManagement.Services
 
             if (request.AcquisitionStartDate.HasValue)
             {
+                var startDate = request.AcquisitionStartDate.Value.Date;
+
                 query = query.Where(x =>
                     x.AcquisitionDate.HasValue &&
-                    x.AcquisitionDate.Value.Date >= request.AcquisitionStartDate.Value.Date);
+                    x.AcquisitionDate.Value >= startDate);
             }
 
             if (request.AcquisitionEndDate.HasValue)
             {
+                // Bitiş gününün tamamını kapsaması için ertesi günün başlangıcı.
+                var endDateExclusive = request.AcquisitionEndDate.Value.Date.AddDays(1);
+
                 query = query.Where(x =>
                     x.AcquisitionDate.HasValue &&
-                    x.AcquisitionDate.Value.Date <= request.AcquisitionEndDate.Value.Date);
+                    x.AcquisitionDate.Value < endDateExclusive);
             }
 
             if (request.MinCloudRate.HasValue)
             {
                 query = query.Where(x =>
                     x.CloudRate.HasValue &&
-                    x.CloudRate >= request.MinCloudRate.Value);
+                    x.CloudRate.Value >= request.MinCloudRate.Value);
             }
 
             if (request.MaxCloudRate.HasValue)
             {
                 query = query.Where(x =>
                     x.CloudRate.HasValue &&
-                    x.CloudRate <= request.MaxCloudRate.Value);
+                    x.CloudRate.Value <= request.MaxCloudRate.Value);
             }
 
             if (request.MinOffNadir.HasValue)
             {
                 query = query.Where(x =>
                     x.OffNadirAngle.HasValue &&
-                    x.OffNadirAngle >= request.MinOffNadir.Value);
+                    x.OffNadirAngle.Value >= request.MinOffNadir.Value);
             }
 
             if (request.MaxOffNadir.HasValue)
             {
                 query = query.Where(x =>
                     x.OffNadirAngle.HasValue &&
-                    x.OffNadirAngle <= request.MaxOffNadir.Value);
+                    x.OffNadirAngle.Value <= request.MaxOffNadir.Value);
             }
 
             if (request.MinResolution.HasValue)
             {
                 query = query.Where(x =>
                     x.Resolution.HasValue &&
-                    x.Resolution >= request.MinResolution.Value);
+                    x.Resolution.Value >= request.MinResolution.Value);
             }
 
             if (request.MaxResolution.HasValue)
             {
                 query = query.Where(x =>
                     x.Resolution.HasValue &&
-                    x.Resolution <= request.MaxResolution.Value);
+                    x.Resolution.Value <= request.MaxResolution.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(request.SpectralResolution))
             {
-                var spectralResolution = request.SpectralResolution.Trim().ToLower();
+                var spectralResolution = request.SpectralResolution
+                    .Trim()
+                    .ToLower();
 
                 query = query.Where(x =>
-                    (x.Sensor != null && x.Sensor.ToLower().Contains(spectralResolution)) ||
-                    (x.SensorMode != null && x.SensorMode.ToLower().Contains(spectralResolution)) ||
-                    (x.BandId != null && x.BandId.ToLower().Contains(spectralResolution)));
+                    (x.Sensor != null &&
+                     x.Sensor.ToLower().Contains(spectralResolution)) ||
+
+                    (x.SensorMode != null &&
+                     x.SensorMode.ToLower().Contains(spectralResolution)) ||
+
+                    (x.BandId != null &&
+                     x.BandId.ToLower().Contains(spectralResolution)));
             }
 
-            return await query
+            /*
+             * Entity'nin kendisini GroupBy içinden seçmiyoruz.
+             * Her ImageId grubundaki en güncel Product Id değerini seçiyoruz.
+             *
+             * AcquisitionDate değerleri aynıysa en büyük Id seçilerek
+             * sonuç deterministik hale getiriliyor.
+             */
+            var latestProductIds = query
+                .GroupBy(x => x.ImageId)
+                .Select(g => g
+                    .OrderByDescending(x => x.AcquisitionDate)
+                    .ThenByDescending(x => x.Id)
+                    .Select(x => x.Id)
+                    .First());
+
+            var products = await query
+                .Where(x => latestProductIds.Contains(x.Id))
                 .OrderByDescending(x => x.AcquisitionDate)
+                .ThenByDescending(x => x.Id)
                 .Select(x => new ProductSmartFilterResult
                 {
                     Id = x.Id,
@@ -358,13 +410,18 @@ namespace OrderManagement.Services
 
                     SensorMode = x.SensorMode,
                     Provider = x.Provider,
+                    Satellite = x.Satellite,
 
                     AcquisitionDate = x.AcquisitionDate,
                     AcquisitionStartDate = x.AcquisitionStartDate,
                     AcquisitionEndDate = x.AcquisitionEndDate,
 
                     Resolution = x.Resolution,
-                    SpectralResolution = x.BandId ?? x.SensorMode ?? x.Sensor,
+
+                    SpectralResolution =
+                        x.BandId ??
+                        x.SensorMode ??
+                        x.Sensor,
 
                     CloudRate = x.CloudRate,
                     NadirAngle = x.OffNadirAngle,
@@ -377,15 +434,65 @@ namespace OrderManagement.Services
                     PreviewUrl = x.PreviewUrl,
                     ThumbnailUrl = x.ThumbnailUrl,
                     MetadataUrl = x.MetadataUrl,
+                    PropertyUrl = x.PropertyUrl,
 
                     SunAzimuth = x.SunAzimuth,
                     SunElevation = x.SunElevation,
 
                     Price = x.Price,
+                    IsClassified = x.IsClassified,
+                    IsOrthorectified = x.IsOrthorectified,
+                    IsPansharpened = x.IsPansharpened,
+                    IsNVDIAnalysis = x.IsNVDIAnalysis,
 
-                    Wkt = x.Geometry != null ? x.Geometry.AsText() : null
+                    Wkt = x.Geometry != null
+                        ? x.Geometry.AsText()
+                        : null
                 })
                 .ToListAsync();
+
+            return products;
+        }
+        public async Task<Result<ProductAcquisitionDateRange>> GetMarketAcquisitionDateRangeAsync()
+        {
+            var result = new Result<ProductAcquisitionDateRange>();
+
+            await using var transaction = await _dbContext.Database
+                .BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+
+            try
+            {
+                var marketProducts = _dbContext.Products
+                    .AsNoTracking()
+                    .Where(x =>
+                        !x.IsDeleted &&
+                        x.IsInMarket &&
+                        x.CategoryId == (int)ProductCategory.Market &&
+                        x.AcquisitionDate.HasValue);
+
+                var dateRange = await marketProducts
+                    .GroupBy(_ => 1)
+                    .Select(group => new ProductAcquisitionDateRange
+                    {
+                        AcquisitionStartDate = group.Min(x => x.AcquisitionDate),
+                        AcquisitionEndDate = group.Max(x => x.AcquisitionDate)
+                    })
+                    .FirstOrDefaultAsync()
+                    ?? new ProductAcquisitionDateRange();
+
+                result.SetData(dateRange);
+                result.SetMessage("İşlem başarı ile gerçekleşti.");
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                result.SetIsSuccess(false);
+                result.SetMessage(ex.Message);
+            }
+
+            return result;
         }
     }
 }

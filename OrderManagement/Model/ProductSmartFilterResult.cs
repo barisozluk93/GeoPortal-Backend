@@ -43,7 +43,13 @@
         public string? ThumbnailUrl { get; set; }
         public string? MetadataUrl { get; set; }
         public string? Wkt { get; set; }
+        public string? PropertyUrl { get; set; }
 
         public decimal? Price { get; set; }
+
+        public bool? IsClassified { get; set; }
+        public bool? IsOrthorectified { get; set; }
+        public bool? IsPansharpened { get; set; }
+        public bool? IsNVDIAnalysis { get; set; }
     }
 }

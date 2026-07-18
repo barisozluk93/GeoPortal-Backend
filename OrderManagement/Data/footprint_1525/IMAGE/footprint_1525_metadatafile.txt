@@ -1,0 +1,152 @@
+generationTime = 2028-02-06T03:53:16.0000;
+productOrderId = "s25302140020_01_P001";
+productCatalogId = "204001D7D00";
+imageDescriptor = "MSP2A";
+bandId = "BGRNIR";
+panSharpenAlgorithm = "XXX";
+numRows = 14295;
+numColumns = 12022;
+productLevel = "S2A";
+productType = "Standard";
+numberOfLooks = 1;
+radiometricLevel = "Corrected";
+radiometricEnhancement = "CCCC";
+bitsPerPixel = 12;
+compressionType = "None";
+BEGIN_GROUP = BAND_B
+	ULLon =   28.91917084;
+	ULLat =   41.05107539;
+	ULHAE =    71.00;
+	URLon =   28.99065089;
+	URLat =   41.04986242;
+	URHAE =    71.00;
+	LRLon =   28.98871399;
+	LRLat =   40.98551963;
+	LRHAE =    71.00;
+	LLLon =   28.91730338;
+	LLLat =   40.98672987;
+	LLHAE =    71.00;
+	absCalFactor = 1.260825e-02;
+	effectiveBandwidth = 5.430000e-02;
+	TDILevel = 14;
+END_GROUP = BAND_B
+BEGIN_GROUP = BAND_G
+	ULLon =   28.91917084;
+	ULLat =   41.05107539;
+	ULHAE =    71.00;
+	URLon =   28.99065089;
+	URLat =   41.04986242;
+	URHAE =    71.00;
+	LRLon =   28.98871399;
+	LRLat =   40.98551963;
+	LRHAE =    71.00;
+	LLLon =   28.91730338;
+	LLLat =   40.98672987;
+	LLHAE =    71.00;
+	absCalFactor = 9.713071e-03;
+	effectiveBandwidth = 6.300000e-02;
+	TDILevel = 14;
+END_GROUP = BAND_G
+BEGIN_GROUP = BAND_R
+	ULLon =   28.91917084;
+	ULLat =   41.05107539;
+	ULHAE =    71.00;
+	URLon =   28.99065089;
+	URLat =   41.04986242;
+	URHAE =    71.00;
+	LRLon =   28.98871399;
+	LRLat =   40.98551963;
+	LRHAE =    71.00;
+	LLLon =   28.91730338;
+	LLLat =   40.98672987;
+	LLHAE =    71.00;
+	absCalFactor = 1.103623e-02;
+	effectiveBandwidth = 5.740000e-02;
+	TDILevel = 10;
+END_GROUP = BAND_R
+BEGIN_GROUP = BAND_N
+	ULLon =   28.91917084;
+	ULLat =   41.05107539;
+	ULHAE =    71.00;
+	URLon =   28.99065089;
+	URLat =   41.04986242;
+	URHAE =    71.00;
+	LRLon =   28.98871399;
+	LRLat =   40.98551963;
+	LRHAE =    71.00;
+	LLLon =   28.91730338;
+	LLLat =   40.98672987;
+	LLHAE =    71.00;
+	absCalFactor = 1.224380e-02;
+	effectiveBandwidth = 9.890000e-02;
+	TDILevel = 10;
+END_GROUP = BAND_N
+outputFormat = "GeoTIFF";
+BEGIN_GROUP = IMAGE_1
+	avgLineRate = 5000.01;
+	exposureDuration = 0.00020000;
+	minCollectedRowGSD =   0.501;
+	maxCollectedRowGSD =   0.501;
+	meanCollectedRowGSD =   0.501;
+	minCollectedColGSD =   0.526;
+	maxCollectedColGSD =   0.528;
+	meanCollectedColGSD =   0.527;
+	meanCollectedGSD =   0.514;
+	rowUncertainty =   17.13;
+	colUncertainty =   38.52;
+	minSunAz = 151.1;
+	maxSunAz = 151.1;
+	meanSunAz = 151.1;
+	minSunEl =  53.5;
+	maxSunEl =  53.6;
+	meanSunEl =  53.5;
+	minSatAz =  65.8;
+	maxSatAz =  66.6;
+	meanSatAz =  66.2;
+	minSatEl =  68.2;
+	maxSatEl =  68.4;
+	meanSatEl =  68.3;
+	minInTrackViewAngle =  10.5;
+	maxInTrackViewAngle =  10.6;
+	meanInTrackViewAngle =  10.6;
+	minCrossTrackViewAngle =  16.3;
+	maxCrossTrackViewAngle =  16.3;
+	meanCrossTrackViewAngle =  16.3;
+	minOffNadirViewAngle =  19.3;
+	maxOffNadirViewAngle =  19.4;
+	meanOffNadirViewAngle =  19.3;
+	cloudCover = 0.000;
+	resamplingKernel = "ENH";
+	revNumber = 51961;
+END_GROUP = IMAGE_1
+BEGIN_GROUP = MAP_PROJECTED_PRODUCT
+	earliestAcqTime = 2019-09-03T08:56:14.565957Z;
+	latestAcqTime = 2019-09-03T08:56:14.565957Z;
+	datumName = "WE";
+	semiMajorAxis = 6378137.0000;
+	inverseFlattening = 298.257223563;
+	datumOffset = (
+	     0.000,
+	     0.000,
+	     0.000 );
+	mapProjName = "UTM";
+	mapProjCode = 1;
+	mapZone = 35;
+	mapHemi = "N";
+	mapProjParam = (
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000,
+	  0.000000000 );
+	
