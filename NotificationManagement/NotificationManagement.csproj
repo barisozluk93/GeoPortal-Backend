@@ -19,6 +19,7 @@
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.1" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
+    <ProjectReference Include="..\History.Shared\History.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,3 +1,4 @@
+using History.Shared;
 using AuditLog.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -28,8 +29,11 @@ var emailConfig = Configuration
 
 builder.Services.AddSingleton(emailConfig);
 
-builder.Services.AddDbContext<UserManagementContext>(options =>
-        options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<UserManagementContext>((sp, options) =>
+{
+    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
+    options.AddInterceptors(sp.GetRequiredService<HistorySaveChangesInterceptor>());
+});
 
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -78,6 +82,8 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizat
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddGeoPortalAuditLogging(builder.Configuration, "UserManagement");
 builder.Host.UseWindowsService();
+
+builder.Services.AddGeoPortalHistory(builder.Configuration, "UserManagement");
 
 var app = builder.Build();
 

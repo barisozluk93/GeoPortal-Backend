@@ -1,3 +1,4 @@
+using History.Shared;
 using AuditLog.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,8 +22,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<MapManagementContext>(options =>
-        options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<MapManagementContext>((sp, options) =>
+{
+    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
+    options.AddInterceptors(sp.GetRequiredService<HistorySaveChangesInterceptor>());
+});
 
 builder.Services.AddScoped<IMapService, MapService>();
 builder.Services.AddScoped<IApiKeyValidationService, ApiKeyValidationService>();
@@ -73,6 +77,8 @@ builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Host.UseWindowsService();
+
+builder.Services.AddGeoPortalHistory(builder.Configuration, "MapManagement");
 
 var app = builder.Build();
 

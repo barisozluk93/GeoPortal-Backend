@@ -1,3 +1,4 @@
+using History.Shared;
 using AuditLog.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -19,8 +20,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<NotificationManagementContext>(options =>
-    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<NotificationManagementContext>((sp, options) =>
+{
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+    options.AddInterceptors(sp.GetRequiredService<HistorySaveChangesInterceptor>());
+});
 
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddHttpClient<IExpoPushService, ExpoPushService>();
@@ -113,6 +117,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 builder.Host.UseWindowsService();
+
+builder.Services.AddGeoPortalHistory(builder.Configuration, "NotificationManagement");
 
 var app = builder.Build();
 

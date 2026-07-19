@@ -132,3 +132,5 @@ C:\Users\Asus\Documents\GitHub\GeoPortal-Backend\GeoPortal-Backend\OrderManageme
 C:\Users\Asus\Documents\GitHub\GeoPortal-Backend\GeoPortal-Backend\OrderManagement\obj\Debug\net8.0\OrderManagement.pdb
 C:\Users\Asus\Documents\GitHub\GeoPortal-Backend\GeoPortal-Backend\OrderManagement\obj\Debug\net8.0\OrderManagement.genruntimeconfig.cache
 C:\Users\Asus\Documents\GitHub\GeoPortal-Backend\GeoPortal-Backend\OrderManagement\obj\Debug\net8.0\ref\OrderManagement.dll
+C:\Users\Asus\Documents\GitHub\GeoPortal-Backend\GeoPortal-Backend\OrderManagement\bin\Debug\net8.0\History.Shared.dll
+C:\Users\Asus\Documents\GitHub\GeoPortal-Backend\GeoPortal-Backend\OrderManagement\bin\Debug\net8.0\History.Shared.pdb

@@ -1,3 +1,4 @@
+using History.Shared;
 using AuditLog.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -24,9 +25,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<OrderManagementContext>(options =>
-        options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.UseNetTopologySuite()));
+builder.Services.AddDbContext<OrderManagementContext>((sp, options) =>
+{
+    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.UseNetTopologySuite());
+    options.AddInterceptors(sp.GetRequiredService<HistorySaveChangesInterceptor>());
+});
 
 builder.Services.AddScoped<IBasketService, BasketService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -76,6 +80,8 @@ builder.Services.AddControllers()
     });
 
 builder.Host.UseWindowsService();
+
+builder.Services.AddGeoPortalHistory(builder.Configuration, "OrderManagement");
 
 var app = builder.Build();
 

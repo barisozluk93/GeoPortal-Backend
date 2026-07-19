@@ -26,7 +26,8 @@
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="8.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
-	</ItemGroup>
+	  <ProjectReference Include="..\History.Shared\History.Shared.csproj" />
+  </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\AuditLog.Shared\AuditLog.Shared.csproj" />

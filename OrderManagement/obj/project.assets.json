@@ -1971,6 +1971,22 @@
         "frameworkReferences": [
           "Microsoft.AspNetCore.App"
         ]
+      },
+      "History.Shared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "8.0.1"
+        },
+        "compile": {
+          "bin/placeholder/History.Shared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/History.Shared.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
@@ -5112,11 +5128,17 @@
       "type": "project",
       "path": "../AuditLog.Shared/AuditLog.Shared.csproj",
       "msbuildProject": "../AuditLog.Shared/AuditLog.Shared.csproj"
+    },
+    "History.Shared/1.0.0": {
+      "type": "project",
+      "path": "../History.Shared/History.Shared.csproj",
+      "msbuildProject": "../History.Shared/History.Shared.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net8.0": [
       "AuditLog.Shared >= 1.0.0",
+      "History.Shared >= 1.0.0",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 8.0.1",
       "Microsoft.AspNetCore.WebSockets >= 2.2.1",
       "Microsoft.EntityFrameworkCore >= 8.0.1",
@@ -5166,6 +5188,9 @@
           "projectReferences": {
             "C:\\Users\\Asus\\Documents\\GitHub\\GeoPortal-Backend\\GeoPortal-Backend\\AuditLog.Shared\\AuditLog.Shared.csproj": {
               "projectPath": "C:\\Users\\Asus\\Documents\\GitHub\\GeoPortal-Backend\\GeoPortal-Backend\\AuditLog.Shared\\AuditLog.Shared.csproj"
+            },
+            "C:\\Users\\Asus\\Documents\\GitHub\\GeoPortal-Backend\\GeoPortal-Backend\\History.Shared\\History.Shared.csproj": {
+              "projectPath": "C:\\Users\\Asus\\Documents\\GitHub\\GeoPortal-Backend\\GeoPortal-Backend\\History.Shared\\History.Shared.csproj"
             }
           }
         }

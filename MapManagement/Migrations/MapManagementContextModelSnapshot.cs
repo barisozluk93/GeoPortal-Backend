@@ -73,7 +73,7 @@ namespace MapManagement.Migrations
                         new
                         {
                             Id = 1L,
-                            CreatedAt = new DateTime(2026, 7, 15, 17, 3, 31, 987, DateTimeKind.Utc).AddTicks(7667),
+                            CreatedAt = new DateTime(2026, 7, 19, 11, 19, 58, 171, DateTimeKind.Utc).AddTicks(5031),
                             Format = "image/png",
                             IsDeleted = false,
                             IsVisible = true,
@@ -87,7 +87,7 @@ namespace MapManagement.Migrations
                         new
                         {
                             Id = 2L,
-                            CreatedAt = new DateTime(2026, 7, 15, 17, 3, 31, 987, DateTimeKind.Utc).AddTicks(7676),
+                            CreatedAt = new DateTime(2026, 7, 19, 11, 19, 58, 171, DateTimeKind.Utc).AddTicks(5037),
                             IsDeleted = false,
                             IsVisible = false,
                             Name = "OSM Standart",
@@ -99,7 +99,7 @@ namespace MapManagement.Migrations
                         new
                         {
                             Id = 3L,
-                            CreatedAt = new DateTime(2026, 7, 15, 17, 3, 31, 987, DateTimeKind.Utc).AddTicks(7677),
+                            CreatedAt = new DateTime(2026, 7, 19, 11, 19, 58, 171, DateTimeKind.Utc).AddTicks(5039),
                             IsDeleted = false,
                             IsVisible = false,
                             Name = "Topografik Harita",

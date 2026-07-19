@@ -1,3 +1,4 @@
+using History.Shared;
 using AuditLog.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -26,8 +27,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
-builder.Services.AddDbContext<SupportManagementDbContext>(options =>
-        options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<SupportManagementDbContext>((sp, options) =>
+{
+    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
+    options.AddInterceptors(sp.GetRequiredService<HistorySaveChangesInterceptor>());
+});
 
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
@@ -75,6 +79,8 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizat
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddGeoPortalAuditLogging(builder.Configuration, "SupportManagement");
 builder.Host.UseWindowsService();
+
+builder.Services.AddGeoPortalHistory(builder.Configuration, "SupportManagement");
 
 var app = builder.Build();
 

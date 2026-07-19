@@ -9,6 +9,7 @@
       "OrderManagement/1.0.0": {
         "dependencies": {
           "AuditLog.Shared": "1.0.0",
+          "History.Shared": "1.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.1",
           "Microsoft.AspNetCore.WebSockets": "2.2.1",
           "Microsoft.EntityFrameworkCore": "8.0.1",
@@ -1015,6 +1016,17 @@
             "fileVersion": "1.0.0.0"
           }
         }
+      },
+      "History.Shared/1.0.0": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "8.0.1"
+        },
+        "runtime": {
+          "History.Shared.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -1725,6 +1737,11 @@
       "hashPath": "system.threading.channels.6.0.0.nupkg.sha512"
     },
     "AuditLog.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "History.Shared/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
