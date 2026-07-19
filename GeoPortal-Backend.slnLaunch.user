@@ -4,8 +4,7 @@
     "Projects": [
       {
         "Path": "UserManagement\\UserManagement.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
+        "Action": "Start"
       },
       {
         "Path": "ApiGateway\\ApiGateway.csproj",
@@ -39,6 +38,11 @@
       },
       {
         "Path": "FileExporter\\FileExporter.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "AuditLogManagement\\AuditLogManagement.csproj",
         "Action": "Start",
         "DebugTarget": "http"
       }

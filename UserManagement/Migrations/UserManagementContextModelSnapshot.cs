@@ -664,6 +664,14 @@ namespace UserManagement.Migrations
                             IsDeleted = false,
                             IsSystemData = true,
                             Name = "Yetki Ekranı Listeleme Yetkisi"
+                        },
+                        new
+                        {
+                            Id = 67L,
+                            Code = "LogScene.Paging.Permission",
+                            IsDeleted = false,
+                            IsSystemData = true,
+                            Name = "Log Ekranı Listeleme Yetkisi"
                         });
                 });
 
@@ -1185,6 +1193,13 @@ namespace UserManagement.Migrations
                             Id = 88L,
                             IsDeleted = false,
                             PermissionId = 66L,
+                            RoleId = 1L
+                        },
+                        new
+                        {
+                            Id = 89L,
+                            IsDeleted = false,
+                            PermissionId = 67L,
                             RoleId = 1L
                         },
                         new
@@ -1974,6 +1989,13 @@ namespace UserManagement.Migrations
                             Id = 88L,
                             IsDeleted = false,
                             PermissionId = 66L,
+                            UserId = 1L
+                        },
+                        new
+                        {
+                            Id = 89L,
+                            IsDeleted = false,
+                            PermissionId = 67L,
                             UserId = 1L
                         },
                         new

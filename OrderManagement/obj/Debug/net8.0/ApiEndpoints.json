@@ -376,6 +376,16 @@
   },
   {
     "ContainingType": "OrderManagement.Controllers.ProductController",
+    "Method": "GetMarketAcquisitionDateRangeAsync",
+    "RelativePath": "geoPortalApi/Product/GetMarketAcquisitionDateRange",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "OrderManagement.Controllers.ProductController",
     "Method": "Paginate",
     "RelativePath": "geoPortalApi/Product/Paginate",
     "HttpMethod": "GET",
@@ -406,6 +416,22 @@
         "Name": "PageSize",
         "Type": "System.Int32",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "OrderManagement.Controllers.ProductController",
+    "Method": "SmartFilter",
+    "RelativePath": "geoPortalApi/Product/SmartFilter",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "OrderManagement.Model.ProductSmartFilterRequest",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

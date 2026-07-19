@@ -1337,6 +1337,22 @@
           }
         }
       },
+      "NetTopologySuite.Features/2.0.0": {
+        "type": "package",
+        "dependencies": {
+          "NetTopologySuite": "[2.0.0, 3.0.0-A)"
+        },
+        "compile": {
+          "lib/netstandard2.0/NetTopologySuite.Features.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/NetTopologySuite.Features.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "NetTopologySuite.IO.PostGis/2.1.0": {
         "type": "package",
         "dependencies": {
@@ -1349,6 +1365,24 @@
         },
         "runtime": {
           "lib/netstandard2.1/NetTopologySuite.IO.PostGis.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "NetTopologySuite.IO.ShapeFile/2.1.0": {
+        "type": "package",
+        "dependencies": {
+          "NetTopologySuite": "[2.0.0, 3.0.0-A)",
+          "NetTopologySuite.Features": "[2.0.0, 3.0.0-A)",
+          "System.Text.Encoding.CodePages": "4.5.1"
+        },
+        "compile": {
+          "lib/netstandard2.0/NetTopologySuite.IO.ShapeFile.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/NetTopologySuite.IO.ShapeFile.dll": {
             "related": ".xml"
           }
         }
@@ -1780,7 +1814,7 @@
       "System.Runtime.CompilerServices.Unsafe/6.0.0": {
         "type": "package",
         "compile": {
-          "lib/net6.0/_._": {
+          "lib/net6.0/System.Runtime.CompilerServices.Unsafe.dll": {
             "related": ".xml"
           }
         },
@@ -1849,7 +1883,7 @@
           "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "compile": {
-          "lib/net6.0/_._": {
+          "lib/net6.0/System.Text.Encoding.CodePages.dll": {
             "related": ".xml"
           }
         },
@@ -1924,6 +1958,19 @@
         "build": {
           "buildTransitive/netcoreapp3.1/_._": {}
         }
+      },
+      "AuditLog.Shared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/AuditLog.Shared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/AuditLog.Shared.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
@@ -4167,6 +4214,19 @@
         "nettopologysuite.nuspec"
       ]
     },
+    "NetTopologySuite.Features/2.0.0": {
+      "sha512": "RDbEpujDL0bsAyTMHlbKj36KIPhUrtSGUaO/jUjMnsLcixrJFwoDJ8p717FdgMHpQDrcEJAKF+QsAlYsSULkew==",
+      "type": "package",
+      "path": "nettopologysuite.features/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/NetTopologySuite.Features.dll",
+        "lib/netstandard2.0/NetTopologySuite.Features.xml",
+        "nettopologysuite.features.2.0.0.nupkg.sha512",
+        "nettopologysuite.features.nuspec"
+      ]
+    },
     "NetTopologySuite.IO.PostGis/2.1.0": {
       "sha512": "3W8XTFz8iP6GQ5jDXK1/LANHiU+988k1kmmuPWNKcJLpmSg6CvFpbTpz+s4+LBzkAp64wHGOldSlkSuzYfrIKA==",
       "type": "package",
@@ -4180,6 +4240,20 @@
         "lib/netstandard2.1/NetTopologySuite.IO.PostGis.xml",
         "nettopologysuite.io.postgis.2.1.0.nupkg.sha512",
         "nettopologysuite.io.postgis.nuspec"
+      ]
+    },
+    "NetTopologySuite.IO.ShapeFile/2.1.0": {
+      "sha512": "syaBMB56Rm1hmEK5vTpr5t/UjS2PA5bsVKaeWYY0ib6dlVonCgxfahxrZchnFlwZvuXnNKy/OP15Tr7UD/BM7Q==",
+      "type": "package",
+      "path": "nettopologysuite.io.shapefile/2.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "icon.png",
+        "lib/netstandard2.0/NetTopologySuite.IO.ShapeFile.dll",
+        "lib/netstandard2.0/NetTopologySuite.IO.ShapeFile.xml",
+        "nettopologysuite.io.shapefile.2.1.0.nupkg.sha512",
+        "nettopologysuite.io.shapefile.nuspec"
       ]
     },
     "Newtonsoft.Json/13.0.3": {
@@ -5033,10 +5107,16 @@
         "system.threading.channels.nuspec",
         "useSharedDesignerContext.txt"
       ]
+    },
+    "AuditLog.Shared/1.0.0": {
+      "type": "project",
+      "path": "../AuditLog.Shared/AuditLog.Shared.csproj",
+      "msbuildProject": "../AuditLog.Shared/AuditLog.Shared.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net8.0": [
+      "AuditLog.Shared >= 1.0.0",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 8.0.1",
       "Microsoft.AspNetCore.WebSockets >= 2.2.1",
       "Microsoft.EntityFrameworkCore >= 8.0.1",
@@ -5045,6 +5125,7 @@
       "Microsoft.VisualStudio.Azure.Containers.Tools.Targets >= 1.19.4",
       "NETCore.MailKit >= 2.1.0",
       "NetTopologySuite >= 2.6.0",
+      "NetTopologySuite.IO.ShapeFile >= 2.1.0",
       "Newtonsoft.Json >= 13.0.3",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 8.0.0",
       "Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite >= 8.0.0",
@@ -5082,7 +5163,11 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\Asus\\Documents\\GitHub\\GeoPortal-Backend\\GeoPortal-Backend\\AuditLog.Shared\\AuditLog.Shared.csproj": {
+              "projectPath": "C:\\Users\\Asus\\Documents\\GitHub\\GeoPortal-Backend\\GeoPortal-Backend\\AuditLog.Shared\\AuditLog.Shared.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -5134,6 +5219,10 @@
           "NetTopologySuite": {
             "target": "Package",
             "version": "[2.6.0, )"
+          },
+          "NetTopologySuite.IO.ShapeFile": {
+            "target": "Package",
+            "version": "[2.1.0, )"
           },
           "Newtonsoft.Json": {
             "target": "Package",

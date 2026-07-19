@@ -1,3 +1,4 @@
+using AuditLog.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +76,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddGeoPortalAuditLogging(builder.Configuration, "UserManagement");
 builder.Host.UseWindowsService();
 
 var app = builder.Build();
@@ -94,6 +96,7 @@ else
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseGeoPortalAuditLogging();
 
 app.UseAuthorization();
 

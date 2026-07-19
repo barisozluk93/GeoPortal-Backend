@@ -1,3 +1,4 @@
+using AuditLog.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -86,6 +87,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddGeoPortalAuditLogging(builder.Configuration, "NotificationManagement");
 
 builder.Services.AddCors(options =>
 {
@@ -127,13 +129,14 @@ else
     scope.ServiceProvider.GetRequiredService<NotificationManagementContext>().Database.Migrate();
 }
 
-// Reverse proxy arkasýnda forwarded headers kullanýyorsan kalabilir.
-// Sorun yaþarsan geçici olarak kapatýp test et.
+// Reverse proxy arkasï¿½nda forwarded headers kullanï¿½yorsan kalabilir.
+// Sorun yaï¿½arsan geï¿½ici olarak kapatï¿½p test et.
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+app.UseGeoPortalAuditLogging();
 app.UseAuthorization();
 
 app.MapControllers();

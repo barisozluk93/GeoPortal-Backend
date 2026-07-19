@@ -1,3 +1,4 @@
+using AuditLog.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -50,6 +51,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddGeoPortalAuditLogging(builder.Configuration, "FileManagement");
 
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
@@ -73,12 +75,11 @@ else
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseGeoPortalAuditLogging();
 
 app.UseAuthorization();
 
 app.MapControllers();
-
-//app.Run("http://159.223.219.238:5008");
 
 app.Run();
 

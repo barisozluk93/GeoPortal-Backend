@@ -29,4 +29,7 @@
     <Folder Include="Uploads\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AuditLog.Shared\AuditLog.Shared.csproj" />
+  </ItemGroup>
 </Project>

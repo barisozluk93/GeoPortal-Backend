@@ -673,6 +673,49 @@
           }
         }
       }
+    },
+    "/geoPortalApi/Product/SmartFilter": {
+      "post": {
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductSmartFilterRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductSmartFilterRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductSmartFilterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/geoPortalApi/Product/GetMarketAcquisitionDateRange": {
+      "get": {
+        "tags": [
+          "Product"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -694,12 +737,71 @@
           "isDeleted": {
             "type": "boolean"
           },
+          "basketItemId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "productId": {
             "type": "integer",
             "format": "int64"
           },
           "product": {
             "$ref": "#/components/schemas/Product"
+          },
+          "numberOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aoiId": {
+            "type": "string",
+            "nullable": true
+          },
+          "aoiName": {
+            "type": "string",
+            "nullable": true
+          },
+          "aoiWkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestWkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "intersectionWkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestAreaKm2": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "baseTotalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "processingOptionsJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "processingOptions": {
+            "nullable": true
+          },
+          "processingTotalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "calculatedTotalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "itemType": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1138,23 +1240,23 @@
             "type": "integer",
             "format": "int64"
           },
-          "product": {
-            "$ref": "#/components/schemas/Product"
-          },
           "productId": {
             "type": "integer",
             "format": "int64"
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
           },
           "productValue": {
             "type": "string",
             "nullable": true
           },
-          "order": {
-            "$ref": "#/components/schemas/Order"
-          },
           "orderId": {
             "type": "integer",
             "format": "int64"
+          },
+          "order": {
+            "$ref": "#/components/schemas/Order"
           },
           "orderStatus": {
             "type": "integer",
@@ -1168,6 +1270,61 @@
           "completionDate": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "numberOf": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aoiId": {
+            "type": "string",
+            "nullable": true
+          },
+          "aoiName": {
+            "type": "string",
+            "nullable": true
+          },
+          "aoiWkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestWkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "intersectionWkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestAreaKm2": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "baseTotalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "processingOptionsJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "processingOptions": {
+            "nullable": true
+          },
+          "processingTotalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "calculatedTotalPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "itemType": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -1383,83 +1540,32 @@
             "type": "string",
             "nullable": true
           },
+          "imageId": {
+            "type": "string",
+            "nullable": true
+          },
+          "footprintPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "geoTiffPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "quicklookPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadataPath": {
+            "type": "string",
+            "nullable": true
+          },
           "downloadLink": {
             "type": "string",
-            "nullable": true
-          },
-          "price": {
-            "type": "number",
-            "format": "double"
-          },
-          "priceStr": {
-            "type": "string",
-            "nullable": true
-          },
-          "isDeleted": {
-            "type": "boolean"
-          },
-          "categoryId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "city": {
-            "type": "string",
-            "nullable": true
-          },
-          "district": {
-            "type": "string",
-            "nullable": true
-          },
-          "acquisitionDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "provider": {
-            "type": "string",
-            "nullable": true
-          },
-          "resolution": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "cloudRate": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "areaKm2": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "currency": {
-            "type": "string",
-            "nullable": true
-          },
-          "thumbnailUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "previewUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "isOrthorectified": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "isPansharpened": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "isClassified": {
-            "type": "boolean",
             "nullable": true
           },
           "geometry": {
@@ -1485,22 +1591,199 @@
             "format": "double",
             "nullable": true
           },
-          "sourceType": {
-            "$ref": "#/components/schemas/ProductSourceType"
+          "areaKm2": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "district": {
+            "type": "string",
+            "nullable": true
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acquisitionStartDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acquisitionEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "cloudRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "sunElevation": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "sunAzimuth": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "offNadirAngle": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "satellite": {
+            "type": "string",
+            "nullable": true
+          },
+          "sensor": {
+            "type": "string",
+            "nullable": true
+          },
+          "processingLevel": {
+            "type": "string",
+            "nullable": true
           },
           "sourceLabel": {
             "type": "string",
             "nullable": true
           },
-          "requestHash": {
+          "provider": {
             "type": "string",
             "nullable": true
           },
-          "isCustomArea": {
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "stripId": {
+            "type": "string",
+            "nullable": true
+          },
+          "catalogId": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageDescriptor": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageType": {
+            "type": "string",
+            "nullable": true
+          },
+          "sensorMode": {
+            "type": "string",
+            "nullable": true
+          },
+          "bandId": {
+            "type": "string",
+            "nullable": true
+          },
+          "productType": {
+            "type": "string",
+            "nullable": true
+          },
+          "productLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "radiometricLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "outputFormat": {
+            "type": "string",
+            "nullable": true
+          },
+          "spatialReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "scanDirection": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataOwner": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOrthorectified": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "isNVDIAnalysis": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "isPansharpened": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "isClassified": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadataUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "propertyUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "priceStr": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDeleted": {
             "type": "boolean"
           },
           "isInMarket": {
             "type": "boolean"
+          },
+          "isCustomArea": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "priority": {
+            "type": "string",
+            "nullable": true
           },
           "classes": {
             "type": "array",
@@ -1521,13 +1804,11 @@
         "properties": {
           "id": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "productId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "className": {
             "type": "string",
@@ -1548,14 +1829,71 @@
         },
         "additionalProperties": false
       },
-      "ProductSourceType": {
-        "enum": [
-          1,
-          2,
-          3
-        ],
-        "type": "integer",
-        "format": "int32"
+      "ProductSmartFilterRequest": {
+        "type": "object",
+        "properties": {
+          "imageType": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "acquisitionStartDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acquisitionEndDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "maxCloudRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "minCloudRate": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "minOffNadir": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maxOffNadir": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "minResolution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maxResolution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "spectralResolution": {
+            "type": "string",
+            "nullable": true
+          },
+          "wkt": {
+            "type": "string",
+            "nullable": true
+          },
+          "satellite": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "UserAddress": {
         "type": "object",

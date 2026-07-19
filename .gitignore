@@ -1,0 +1,12 @@
+# Visual Studio
+.vs/
+
+# Build outputs
+**/bin/
+**/obj/
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
