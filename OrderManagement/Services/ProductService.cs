@@ -20,39 +20,196 @@ namespace OrderManagement.Services
             _configuration = configuration;
         }
 
-        public async Task<Result<PagingResult<PagedList<Product>>>> Paginate(PagingParameter pagingParameter)
+        public async Task<Result<PagingResult<PagedList<Product>>>> Paginate(
+    PagingParameter pagingParameter)
         {
             var result = new Result<PagingResult<PagedList<Product>>>();
 
-            string? lowerFilterText = string.IsNullOrWhiteSpace(pagingParameter.FilterText)
+            var filterText = string.IsNullOrWhiteSpace(pagingParameter.FilterText)
                 ? null
-                : pagingParameter.FilterText.ToLower();
+                : pagingParameter.FilterText.Trim().ToLower();
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadUncommitted);
+            var imageType = string.IsNullOrWhiteSpace(pagingParameter.ImageType)
+                ? null
+                : pagingParameter.ImageType.Trim().ToLower();
+
+            var satellite = string.IsNullOrWhiteSpace(pagingParameter.Satellite)
+                ? null
+                : pagingParameter.Satellite.Trim().ToLower();
+
+            var spectralResolution =
+                string.IsNullOrWhiteSpace(pagingParameter.SpectralResolution)
+                    ? null
+                    : pagingParameter.SpectralResolution.Trim().ToLower();
+
+            var pageNumber = pagingParameter.PageNumber <= 0
+                ? 1
+                : pagingParameter.PageNumber;
+
+            var pageSize = pagingParameter.PageSize <= 0
+                ? 20
+                : pagingParameter.PageSize;
+
+            await using var transaction =
+                await _dbContext.Database.BeginTransactionAsync(
+                    IsolationLevel.ReadUncommitted);
 
             try
             {
                 var queryable = _dbContext.Products
                     .AsNoTracking()
                     .Where(x =>
-                        (x.CategoryId == (int)ProductCategory.Market ||
-                         x.CategoryId == (int)ProductCategory.CustomArea) &&
+                        !x.IsDeleted &&
                         x.IsInMarket &&
-                        (pagingParameter.MaxCloudRate <= -1 ||
-                            (x.CloudRate.HasValue && x.CloudRate <= pagingParameter.MaxCloudRate)) &&
-                        (pagingParameter.MaxPrice <= -1 ||
-                            x.Price <= pagingParameter.MaxPrice) &&
-                        (string.IsNullOrEmpty(lowerFilterText) ||
-                            (x.Name ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.ImageId ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.City ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.District ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.Provider ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.ImageType ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.Satellite ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.Sensor ?? "").ToLower().Contains(lowerFilterText) ||
-                            (x.SensorMode ?? "").ToLower().Contains(lowerFilterText))
-                    )
+                        (
+                            x.CategoryId == (int)ProductCategory.Market ||
+                            x.CategoryId == (int)ProductCategory.CustomArea
+                        ));
+
+                /*
+                 * İsim araması
+                 * Sadece Product.Name alanında arama yapar.
+                 */
+                if (!string.IsNullOrWhiteSpace(filterText))
+                {
+                    queryable = queryable.Where(x =>
+                        x.Name != null &&
+                        x.Name.ToLower().Contains(filterText));
+                }
+
+                /*
+                 * Görüntü tipi: MONO / STEREO
+                 */
+                if (!string.IsNullOrWhiteSpace(imageType))
+                {
+                    queryable = queryable.Where(x =>
+                        x.ImageType != null &&
+                        x.ImageType.ToLower() == imageType);
+                }
+
+                /*
+                 * Platform: MSP1 - MSP5
+                 */
+                if (!string.IsNullOrWhiteSpace(satellite))
+                {
+                    queryable = queryable.Where(x =>
+                        x.Satellite != null &&
+                        x.Satellite.ToLower().Contains(satellite));
+                }
+
+                /*
+                 * Çekim başlangıç tarihi
+                 */
+                if (pagingParameter.AcquisitionStartDate.HasValue)
+                {
+                    var startDate =
+                        pagingParameter.AcquisitionStartDate.Value.Date;
+
+                    queryable = queryable.Where(x =>
+                        x.AcquisitionDate.HasValue &&
+                        x.AcquisitionDate.Value >= startDate);
+                }
+
+                /*
+                 * Çekim bitiş tarihi.
+                 * Seçilen günün tamamını dahil eder.
+                 */
+                if (pagingParameter.AcquisitionEndDate.HasValue)
+                {
+                    var endDateExclusive =
+                        pagingParameter.AcquisitionEndDate.Value.Date.AddDays(1);
+
+                    queryable = queryable.Where(x =>
+                        x.AcquisitionDate.HasValue &&
+                        x.AcquisitionDate.Value < endDateExclusive);
+                }
+
+                /*
+                 * Bulut oranı
+                 */
+                if (pagingParameter.MinCloudRate.HasValue)
+                {
+                    queryable = queryable.Where(x =>
+                        x.CloudRate.HasValue &&
+                        x.CloudRate.Value >=
+                        pagingParameter.MinCloudRate.Value);
+                }
+
+                if (pagingParameter.MaxCloudRate.HasValue)
+                {
+                    queryable = queryable.Where(x =>
+                        x.CloudRate.HasValue &&
+                        x.CloudRate.Value <=
+                        pagingParameter.MaxCloudRate.Value);
+                }
+
+                /*
+                 * Nadir açısı
+                 */
+                if (pagingParameter.MinOffNadir.HasValue)
+                {
+                    queryable = queryable.Where(x =>
+                        x.OffNadirAngle.HasValue &&
+                        x.OffNadirAngle.Value >=
+                        pagingParameter.MinOffNadir.Value);
+                }
+
+                if (pagingParameter.MaxOffNadir.HasValue)
+                {
+                    queryable = queryable.Where(x =>
+                        x.OffNadirAngle.HasValue &&
+                        x.OffNadirAngle.Value <=
+                        pagingParameter.MaxOffNadir.Value);
+                }
+
+                /*
+                 * GSD / çözünürlük
+                 */
+                if (pagingParameter.MinResolution.HasValue)
+                {
+                    queryable = queryable.Where(x =>
+                        x.Resolution.HasValue &&
+                        x.Resolution.Value >=
+                        pagingParameter.MinResolution.Value);
+                }
+
+                if (pagingParameter.MaxResolution.HasValue)
+                {
+                    queryable = queryable.Where(x =>
+                        x.Resolution.HasValue &&
+                        x.Resolution.Value <=
+                        pagingParameter.MaxResolution.Value);
+                }
+
+                /*
+                 * Spektral çözünürlük.
+                 * Sensor, SensorMode veya BandId üzerinden aranır.
+                 */
+                if (!string.IsNullOrWhiteSpace(spectralResolution))
+                {
+                    queryable = queryable.Where(x =>
+                        (
+                            x.Sensor != null &&
+                            x.Sensor.ToLower().Contains(spectralResolution)
+                        ) ||
+                        (
+                            x.SensorMode != null &&
+                            x.SensorMode.ToLower()
+                                .Contains(spectralResolution)
+                        ) ||
+                        (
+                            x.BandId != null &&
+                            x.BandId.ToLower()
+                                .Contains(spectralResolution)
+                        ));
+                }
+
+                /*
+                 * En yeni görüntüler önce gelsin.
+                 */
+                var projectedQuery = queryable
+                    .OrderByDescending(x => x.AcquisitionDate)
+                    .ThenByDescending(x => x.Id)
                     .Select(x => new Product
                     {
                         Id = x.Id,
@@ -109,14 +266,13 @@ namespace OrderManagement.Services
                         IsClassified = x.IsClassified,
                         IsNVDIAnalysis = x.IsNVDIAnalysis,
 
-                        
                         Classes = x.Classes
                     });
 
                 var pagination = PagedList<Product>.ToPagedList(
-                    queryable,
-                    pagingParameter.PageNumber,
-                    pagingParameter.PageSize);
+                    projectedQuery,
+                    pageNumber,
+                    pageSize);
 
                 result.SetData(new PagingResult<PagedList<Product>>
                 {
@@ -131,13 +287,13 @@ namespace OrderManagement.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+
                 result.SetIsSuccess(false);
                 result.SetMessage(ex.Message);
             }
 
             return result;
         }
-
         public async Task<Result<Product>> GetById(long id)
         {
             var result = new Result<Product>();
