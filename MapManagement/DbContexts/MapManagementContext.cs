@@ -35,11 +35,9 @@ namespace MapManagement.DbContexts
         {
 
             modelBuilder.Entity<Layer>().HasData(
-               new Layer { Id = 1, IsDeleted = false, Name = "Blue Marbel", Url = "https://taiearth.com/geoserver/Maps/wms", OrderNo = 1, Type = LayerType.Wms, LayerName = "Maps:blue_marble", Format = "image/png", IsVisible = true, Opacity = 1 },
-               new Layer { Id = 2, IsDeleted = false, Name = "OSM Standart", Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png", OrderNo = 2, Type = LayerType.BaseMap, IsVisible = false, Opacity = 1 },
-               //new Layer { Id = 2, IsDeleted = false, Name = "Yükseklik Haritası", Url = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png", OrderNo = 2, Type = LayerType.BaseMap, IsVisible = false, Opacity = 1 }
-               new Layer { Id = 3, IsDeleted = false, Name = "Topografik Harita", Url = "https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png", OrderNo = 3, Type = LayerType.BaseMap, IsVisible = false, Opacity = 1 }
-               //new Layer { Id = 4, IsDeleted = false, Name = "Gece Haritası", Url = "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", OrderNo = 4, Type = LayerType.BaseMap, IsVisible = false, Opacity = 1 }
+               new Layer { Id = 1, IsDeleted = false, Name = "OSM Standart", Url = "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png", OrderNo = 1, Type = LayerType.BaseMap, IsVisible = true, Opacity = 1 },
+               new Layer { Id = 2, IsDeleted = false, Name = "Topografik Harita", Url = "https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png", OrderNo = 2, Type = LayerType.BaseMap, IsVisible = false, Opacity = 1 },
+               new Layer { Id = 3, IsDeleted = false, Name = "Uydu Görüntüsü", Url = "https://taiearth.com/geoserver/Maps/wms", OrderNo = 3, Type = LayerType.Wms, LayerName = "Maps:blue_marble", Format = "image/png", IsVisible = false, Opacity = 1 }
             );
         }
     }
